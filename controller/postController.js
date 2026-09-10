@@ -1,4 +1,5 @@
 import Post from "../models/Post.js";
+import { findMatchesForPost } from "../services/matchingService.js";
 
 // @desc    Create a new post
 // @route   POST /api/posts
@@ -28,6 +29,9 @@ export const createPost = async (req, res) => {
             "user",
             "username name email"
         );
+
+        // Find matches asynchronously (don't block response)
+        findMatchesForPost(populatedPost).catch(() => {});
 
         return res.status(201).json({
             success: true,

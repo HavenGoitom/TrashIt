@@ -14,6 +14,7 @@ import reportRouter from "./routes/reportRoute.js";
 import profileRouter from "./routes/profileRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import aiRouter from "./routes/aiRoute.js";
+import matchRouter from "./routes/matchRoute.js";
 import { initSocket } from "./socket/socketHandler.js";
 
 dotenv.config();
@@ -83,6 +84,7 @@ app.use("/api/reports", reportRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/ai", aiRouter);
+app.use("/api/matches", matchRouter);
 
 httpServer.listen(port, () => {
     console.log(`Server is running on port ${port}`);
