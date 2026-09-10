@@ -1,0 +1,1035 @@
+{
+    "info": {
+        "name": "TrashIt API",
+        "description": "Complete API documentation for TrashIt backend - Authentication and Posts",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:5000"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "post_id",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "1. Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"johndoe\",\n    \"name\": \"John Doe\",\n    \"email\": \"john@test.com\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/register",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "register"]
+                        },
+                        "description": "### Endpoint\nPOST /api/auth/register\n\n### Authentication\nNot required\n\n### Request Body\n```json\n{\n    \"username\": \"johndoe\",\n    \"name\": \"John Doe\",\n    \"email\": \"john@test.com\",\n    \"password\": \"password123\"\n}\n```\n\n### Successful Response (201)\n```json\n{\n    \"success\": true,\n    \"message\": \"User registered successfully\",\n    \"token\": \"eyJhbGci...\",\n    \"user\": {\n        \"_id\": \"...\",\n        \"username\": \"johndoe\",\n        \"name\": \"John Doe\",\n        \"email\": \"john@test.com\",\n        \"role\": \"user\"\n    }\n}\n```\n\n### Error Responses\n- 400: Missing fields\n- 400: Email or username already exists"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"john@test.com\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/login",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "login"]
+                        },
+                        "description": "### Endpoint\nPOST /api/auth/login\n\n### Authentication\nNot required\n\n### Request Body\n```json\n{\n    \"email\": \"john@test.com\",\n    \"password\": \"password123\"\n}\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Login successful\",\n    \"token\": \"eyJhbGci...\",\n    \"user\": {\n        \"_id\": \"...\",\n        \"username\": \"johndoe\",\n        \"name\": \"John Doe\",\n        \"email\": \"john@test.com\",\n        \"role\": \"user\"\n    }\n}\n```\n\n### Error Responses\n- 400: Missing email or password\n- 401: Invalid email or password\n\n**Tip:** Copy the token and set it as the `token` collection variable."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Get Current User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/me",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "me"]
+                        },
+                        "description": "### Endpoint\nGET /api/auth/me\n\n### Authentication\nRequired (Bearer token)\n\n### Headers\n```\nAuthorization: Bearer <token>\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"user\": {\n        \"_id\": \"...\",\n        \"username\": \"johndoe\",\n        \"name\": \"John Doe\",\n        \"email\": \"john@test.com\",\n        \"role\": \"user\",\n        \"createdAt\": \"...\",\n        \"updatedAt\": \"...\"\n    }\n}\n```\n\n### Error Responses\n- 401: No token provided\n- 401: Invalid token"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Posts",
+            "item": [
+                {
+                    "name": "4. Create SELL Post",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Plastic Bottles\",\n    \"description\": \"Clean plastic bottles for recycling\",\n    \"type\": \"sell\",\n    \"price\": {\n        \"fixed\": 500\n    },\n    \"quantity\": {\n        \"fixed\": 10\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/posts",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"]
+                        },
+                        "description": "### Endpoint\nPOST /api/posts\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body (Fixed price & quantity)\n```json\n{\n    \"title\": \"Plastic Bottles\",\n    \"description\": \"Clean plastic bottles for recycling\",\n    \"type\": \"sell\",\n    \"price\": { \"fixed\": 500 },\n    \"quantity\": { \"fixed\": 10 }\n}\n```\n\n### Request Body (Price range)\n```json\n{\n    \"title\": \"Plastic Bottles\",\n    \"description\": \"Clean plastic bottles\",\n    \"type\": \"sell\",\n    \"price\": { \"min\": 400, \"max\": 600 },\n    \"quantity\": { \"min\": 5, \"max\": 20 }\n}\n```\n\n### Successful Response (201)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post created successfully\",\n    \"post\": {\n        \"_id\": \"...\",\n        \"title\": \"Plastic Bottles\",\n        \"description\": \"Clean plastic bottles for recycling\",\n        \"images\": [],\n        \"type\": \"sell\",\n        \"price\": { \"fixed\": 500 },\n        \"quantity\": { \"fixed\": 10 },\n        \"status\": \"active\",\n        \"user\": {\n            \"_id\": \"...\",\n            \"username\": \"johndoe\",\n            \"name\": \"John Doe\",\n            \"email\": \"john@test.com\"\n        },\n        \"createdAt\": \"...\",\n        \"updatedAt\": \"...\"\n    }\n}\n```\n\n### Error Responses\n- 400: Missing required fields\n- 400: Validation error (e.g., min > max)\n- 401: No token provided"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Create BUY Post",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Looking for Cardboard\",\n    \"description\": \"Need cardboard boxes for moving\",\n    \"type\": \"buy\",\n    \"price\": {\n        \"min\": 200,\n        \"max\": 400\n    },\n    \"quantity\": {\n        \"min\": 5,\n        \"max\": 15\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/posts",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"]
+                        },
+                        "description": "### Endpoint\nPOST /api/posts\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"title\": \"Looking for Cardboard\",\n    \"description\": \"Need cardboard boxes for moving\",\n    \"type\": \"buy\",\n    \"price\": { \"min\": 200, \"max\": 400 },\n    \"quantity\": { \"min\": 5, \"max\": 15 }\n}\n```\n\n### Successful Response (201)\nSame structure as SELL post, with `type: \"buy\"`.\n\n### Error Responses\n- 400: Missing required fields\n- 400: Validation error\n- 401: No token provided"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "6. Get All Posts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"]
+                        },
+                        "description": "### Endpoint\nGET /api/posts\n\n### Authentication\nNot required\n\n### Query Parameters\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| type | string | Filter by `sell` or `buy` |\n| status | string | Filter by `active`, `sold`, or `closed` |\n| search | string | Search by title or description |\n| minPrice | number | Minimum price filter |\n| maxPrice | number | Maximum price filter |\n| minQuantity | number | Minimum quantity filter |\n| maxQuantity | number | Maximum quantity filter |\n| sort | string | `newest` or `oldest` |\n| page | number | Page number (default: 1) |\n| limit | number | Items per page (default: 10, max: 100) |\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 2,\n    \"total\": 2,\n    \"totalPages\": 1,\n    \"currentPage\": 1,\n    \"posts\": [\n        { ...post object... },\n        { ...post object... }\n    ]\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "7. Filter SELL Posts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts?type=sell",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "sell"
+                                }
+                            ]
+                        },
+                        "description": "### Endpoint\nGET /api/posts?type=sell\n\n### Authentication\nNot required\n\n### Query Parameters\n- `type`: `sell`\n\n### Successful Response (200)\nReturns only posts with `type: \"sell\"`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "8. Filter BUY Posts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts?type=buy",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "buy"
+                                }
+                            ]
+                        },
+                        "description": "### Endpoint\nGET /api/posts?type=buy\n\n### Authentication\nNot required\n\n### Query Parameters\n- `type`: `buy`\n\n### Successful Response (200)\nReturns only posts with `type: \"buy\"`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "9. Search Posts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts?search=plastic",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "plastic"
+                                }
+                            ]
+                        },
+                        "description": "### Endpoint\nGET /api/posts?search=plastic\n\n### Authentication\nNot required\n\n### Query Parameters\n- `search`: Searches in title and description (case-insensitive)\n\n### Successful Response (200)\nReturns posts matching the search term."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "10. Filter by Price Range",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts?minPrice=100&maxPrice=600",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"],
+                            "query": [
+                                {
+                                    "key": "minPrice",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "maxPrice",
+                                    "value": "600"
+                                }
+                            ]
+                        },
+                        "description": "### Endpoint\nGET /api/posts?minPrice=100&maxPrice=600\n\n### Authentication\nNot required\n\n### Query Parameters\n- `minPrice`: Minimum price\n- `maxPrice`: Maximum price\n\n### Successful Response (200)\nReturns posts within the price range."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "11. Filter by Quantity Range",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts?minQuantity=5&maxQuantity=20",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"],
+                            "query": [
+                                {
+                                    "key": "minQuantity",
+                                    "value": "5"
+                                },
+                                {
+                                    "key": "maxQuantity",
+                                    "value": "20"
+                                }
+                            ]
+                        },
+                        "description": "### Endpoint\nGET /api/posts?minQuantity=5&maxQuantity=20\n\n### Authentication\nNot required\n\n### Query Parameters\n- `minQuantity`: Minimum quantity\n- `maxQuantity`: Maximum quantity\n\n### Successful Response (200)\nReturns posts within the quantity range."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "12. Pagination",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts?page=1&limit=5",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        },
+                        "description": "### Endpoint\nGET /api/posts?page=1&limit=5\n\n### Authentication\nNot required\n\n### Query Parameters\n- `page`: Page number (default: 1)\n- `limit`: Items per page (default: 10, max: 100)\n\n### Successful Response (200)\nReturns paginated results with `total`, `totalPages`, `currentPage`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "13. Sort Posts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts?sort=oldest",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts"],
+                            "query": [
+                                {
+                                    "key": "sort",
+                                    "value": "oldest"
+                                }
+                            ]
+                        },
+                        "description": "### Endpoint\nGET /api/posts?sort=oldest\n\n### Authentication\nNot required\n\n### Query Parameters\n- `sort`: `newest` (default) or `oldest`\n\n### Successful Response (200)\nReturns posts sorted by creation date."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "14. Get One Post",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nGET /api/posts/:id\n\n### Authentication\nNot required\n\n### URL Parameters\n- `id`: The post's ObjectId\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"post\": { ...post object... }\n}\n```\n\n### Error Responses\n- 400: Invalid post ID\n- 404: Post not found\n\n**Tip:** Set the `post_id` collection variable from a previous response."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "15. Update Post",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Updated Plastic Bottles\",\n    \"price\": {\n        \"fixed\": 550\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/posts/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nPUT /api/posts/:id\n\n### Authentication\nRequired (Bearer token, owner only)\n\n### Request Body\n```json\n{\n    \"title\": \"Updated Plastic Bottles\",\n    \"price\": { \"fixed\": 550 }\n}\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post updated successfully\",\n    \"post\": { ...updated post... }\n}\n```\n\n### Error Responses\n- 400: Invalid post ID\n- 403: Not the owner\n- 404: Post not found"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "16. Update Post Status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"sold\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/posts/{{post_id}}/status",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts", "{{post_id}}", "status"]
+                        },
+                        "description": "### Endpoint\nPATCH /api/posts/:id/status\n\n### Authentication\nRequired (Bearer token, owner only)\n\n### Request Body\n```json\n{\n    \"status\": \"sold\"\n}\n```\n\nStatus values: `active`, `sold`, `closed`\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post status updated to 'sold'\",\n    \"post\": { ...updated post... }\n}\n```\n\n### Error Responses\n- 400: Invalid status value\n- 400: Invalid post ID\n- 403: Not the owner\n- 404: Post not found"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "17. Delete Post",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/posts/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "posts", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nDELETE /api/posts/:id\n\n### Authentication\nRequired (Bearer token, owner only)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post deleted successfully\"\n}\n```\n\n### Error Responses\n- 400: Invalid post ID\n- 403: Not the owner\n- 404: Post not found"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Favorites",
+            "item": [
+                {
+                    "name": "18. Add to Favorites",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/favorites/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "favorites", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nPOST /api/favorites/:postId\n\n### Authentication\nRequired (Bearer token)\n\n### URL Parameters\n- `postId`: The post's ObjectId\n\n### Successful Response (201)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post added to favorites\",\n    \"favorite\": {\n        \"_id\": \"...\",\n        \"user\": \"...\",\n        \"post\": \"...\",\n        \"createdAt\": \"...\"\n    }\n}\n```\n\n### Error Responses\n- 400: Post already in favorites\n- 400: Invalid post ID\n- 401: No token provided\n- 404: Post not found"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "19. Remove from Favorites",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/favorites/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "favorites", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nDELETE /api/favorites/:postId\n\n### Authentication\nRequired (Bearer token)\n\n### URL Parameters\n- `postId`: The post's ObjectId\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post removed from favorites\"\n}\n```\n\n### Error Responses\n- 400: Invalid post ID\n- 401: No token provided\n- 404: Favorite not found"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "20. Get My Favorites",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/favorites",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "favorites"]
+                        },
+                        "description": "### Endpoint\nGET /api/favorites\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 2,\n    \"favorites\": [\n        {\n            \"_id\": \"...\",\n            \"user\": \"...\",\n            \"post\": {\n                \"_id\": \"...\",\n                \"title\": \"...\",\n                \"type\": \"sell\",\n                \"status\": \"active\",\n                \"user\": { \"username\": \"...\", \"name\": \"...\" }\n            },\n            \"createdAt\": \"...\"\n        }\n    ]\n}\n```\n\n### Error Responses\n- 401: No token provided"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "21. Check if Favorited",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/favorites/check/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "favorites", "check", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nGET /api/favorites/check/:postId\n\n### Authentication\nRequired (Bearer token)\n\n### URL Parameters\n- `postId`: The post's ObjectId\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"isFavorited\": true\n}\n```\n\n### Error Responses\n- 400: Invalid post ID\n- 401: No token provided"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Messaging",
+            "item": [
+                {
+                    "name": "22. Create/Get Conversation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"postId\": \"{{post_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/conversations",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "conversations"]
+                        },
+                        "description": "### Endpoint\nPOST /api/conversations\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"postId\": \"6aa2c0e68e8018229ce3b931\"\n}\n```\n\n### Successful Response (201)\n```json\n{\n    \"success\": true,\n    \"message\": \"Conversation created\",\n    \"conversation\": {\n        \"_id\": \"...\",\n        \"participants\": [\n            { \"_id\": \"...\", \"username\": \"johndoe\", \"name\": \"John Doe\", \"email\": \"john@test.com\" },\n            { \"_id\": \"...\", \"username\": \"janedoe\", \"name\": \"Jane Doe\", \"email\": \"jane@test.com\" }\n        ],\n        \"post\": \"...\",\n        \"lastMessage\": \"\",\n        \"createdAt\": \"...\"\n    }\n}\n```\n\n### Error Responses\n- 400: postId is required\n- 400: Cannot message yourself\n- 404: Post not found\n- 401: No token provided\n\n**Tip:** Copy the conversation `_id` for WebSocket testing."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "23. Get My Conversations",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/conversations",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "conversations"]
+                        },
+                        "description": "### Endpoint\nGET /api/conversations\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 1,\n    \"conversations\": [\n        {\n            \"_id\": \"...\",\n            \"participants\": [...],\n            \"post\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"sell\", \"status\": \"active\" },\n            \"lastMessage\": \"Hello!\",\n            \"lastMessageAt\": \"...\"\n        }\n    ]\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "24. Get Conversation Messages",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "conversations", "{{conversation_id}}", "messages"]
+                        },
+                        "description": "### Endpoint\nGET /api/conversations/:id/messages\n\n### Authentication\nRequired (Bearer token, participants only)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 2,\n    \"messages\": [\n        {\n            \"_id\": \"...\",\n            \"conversation\": \"...\",\n            \"sender\": { \"_id\": \"...\", \"username\": \"johndoe\", \"name\": \"John Doe\" },\n            \"content\": \"Hello, is this available?\",\n            \"read\": false,\n            \"createdAt\": \"...\"\n        }\n    ]\n}\n```\n\n### Error Responses\n- 403: Not a participant\n- 404: Conversation not found"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Notifications",
+            "item": [
+                {
+                    "name": "25. Get My Notifications",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/notifications",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "notifications"]
+                        },
+                        "description": "### Endpoint\nGET /api/notifications\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 2,\n    \"notifications\": [\n        {\n            \"_id\": \"...\",\n            \"recipient\": \"...\",\n            \"type\": \"new_conversation\",\n            \"message\": \"janedoe wants to discuss your post\",\n            \"read\": false,\n            \"sender\": { \"username\": \"janedoe\" },\n            \"relatedPost\": { \"title\": \"...\" },\n            \"createdAt\": \"...\"\n        }\n    ]\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "26. Get Unread Count",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/notifications/unread-count",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "notifications", "unread-count"]
+                        },
+                        "description": "### Endpoint\nGET /api/notifications/unread-count\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"unreadCount\": 3\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "27. Mark as Read",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/notifications/{{notification_id}}/read",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "notifications", "{{notification_id}}", "read"]
+                        },
+                        "description": "### Endpoint\nPATCH /api/notifications/:id/read\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Notification marked as read\",\n    \"notification\": { ... }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "28. Mark All as Read",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/notifications/read-all",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "notifications", "read-all"]
+                        },
+                        "description": "### Endpoint\nPATCH /api/notifications/read-all\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"All notifications marked as read\"\n}\n```"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "WebSocket Events",
+            "item": [
+                {
+                    "name": "WebSocket Documentation",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}",
+                            "host": ["{{base_url}}"]
+                        },
+                        "description": "## WebSocket Connection\n\nConnect to the Socket.io server with JWT authentication:\n\n```javascript\nconst socket = io(\"http://localhost:5000\", {\n    auth: {\n        token: \"your_jwt_token_here\"\n    }\n});\n```\n\n## Events (Client -> Server)\n\n### `send_message`\nSend a message in a conversation.\n```json\n{\n    \"conversationId\": \"...\",\n    \"content\": \"Hello, is this available?\"\n}\n```\n\n### `join_conversation`\nJoin a conversation room to receive real-time messages.\n```json\n{\n    \"conversationId\": \"...\"\n}\n```\n\n### `leave_conversation`\nLeave a conversation room.\n```json\n{\n    \"conversationId\": \"...\"\n}\n```\n\n## Events (Server -> Client)\n\n### `new_message`\nReceived when a new message is sent in a conversation you're part of.\n```json\n{\n    \"_id\": \"...\",\n    \"conversation\": \"...\",\n    \"sender\": { \"_id\": \"...\", \"username\": \"...\", \"name\": \"...\" },\n    \"content\": \"Hello!\",\n    \"read\": false,\n    \"createdAt\": \"...\"\n}\n```\n\n### `new_notification`\nReceived when a new notification is created for you.\n```json\n{\n    \"_id\": \"...\",\n    \"recipient\": \"...\",\n    \"type\": \"new_message\",\n    \"message\": \"johndoe sent you a message\",\n    \"read\": false,\n    \"sender\": \"...\",\n    \"relatedPost\": \"...\",\n    \"relatedConversation\": \"...\",\n    \"createdAt\": \"...\"\n}\n```\n\n### `joined_conversation`\nConfirmed joining a conversation room.\n```json\n{\n    \"conversationId\": \"...\"\n}\n```\n\n### `left_conversation`\nConfirmed leaving a conversation room.\n```json\n{\n    \"conversationId\": \"...\"\n}\n```\n\n### `error`\nError event.\n```json\n{\n    \"message\": \"Error description\"\n}\n```"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Profile",
+            "item": [
+                {
+                    "name": "29. Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"John Updated\",\n    \"bio\": \"Recycling enthusiast\",\n    \"location\": \"Addis Ababa\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/profile",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "profile"]
+                        },
+                        "description": "### Endpoint\nPUT /api/profile\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"name\": \"John Updated\",\n    \"bio\": \"Recycling enthusiast\",\n    \"location\": \"Addis Ababa\"\n}\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Profile updated\",\n    \"user\": { ... }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "30. Change Password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newpassword456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/profile/password",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "profile", "password"]
+                        },
+                        "description": "### Endpoint\nPUT /api/profile/password\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newpassword456\"\n}\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Password changed successfully\"\n}\n```\n\n### Error Responses\n- 401: Current password is incorrect"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "31. Delete Account",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/profile",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "profile"]
+                        },
+                        "description": "### Endpoint\nDELETE /api/profile\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"password\": \"password123\"\n}\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Account deleted successfully\"\n}\n```\n\n### Error Responses\n- 401: Password is incorrect"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Reports",
+            "item": [
+                {
+                    "name": "32. Report a Post",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reason\": \"This post contains inappropriate content\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/reports/post/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "reports", "post", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nPOST /api/reports/post/:postId\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"reason\": \"This post contains inappropriate content\"\n}\n```\n\n### Successful Response (201)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post reported successfully\",\n    \"report\": { ... }\n}\n```\n\n### Error Responses\n- 400: Already reported\n- 404: Post not found"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "33. Report a User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reason\": \"This user is spamming\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/reports/user/{{user_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "reports", "user", "{{user_id}}"]
+                        },
+                        "description": "### Endpoint\nPOST /api/reports/user/:userId\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"reason\": \"This user is spamming\"\n}\n```\n\n### Successful Response (201)\n```json\n{\n    \"success\": true,\n    \"message\": \"User reported successfully\",\n    \"report\": { ... }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "34. Get My Reports",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/reports/my",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "reports", "my"]
+                        },
+                        "description": "### Endpoint\nGET /api/reports/my\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 1,\n    \"reports\": [\n        {\n            \"_id\": \"...\",\n            \"targetType\": \"post\",\n            \"reportedPost\": { \"title\": \"...\" },\n            \"reason\": \"...\",\n            \"status\": \"pending\"\n        }\n    ]\n}\n```"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "35. Get All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{admin_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/users",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "users"]
+                        },
+                        "description": "### Endpoint\nGET /api/admin/users\n\n### Authentication\nRequired (Admin token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 5,\n    \"users\": [ ... ]\n}\n```\n\n### Error Responses\n- 403: Admin role required"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "36. Suspend User",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{admin_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/users/{{user_id}}/suspend",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "users", "{{user_id}}", "suspend"]
+                        },
+                        "description": "### Endpoint\nPATCH /api/admin/users/:id/suspend\n\n### Authentication\nRequired (Admin token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"User suspended\"\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "37. Get All Posts",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{admin_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/posts",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "posts"]
+                        },
+                        "description": "### Endpoint\nGET /api/admin/posts\n\n### Authentication\nRequired (Admin token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 10,\n    \"posts\": [ ... ]\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "38. Remove Post (Admin)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{admin_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/posts/{{post_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "posts", "{{post_id}}"]
+                        },
+                        "description": "### Endpoint\nDELETE /api/admin/posts/:id\n\n### Authentication\nRequired (Admin token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"message\": \"Post removed by admin\"\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "39. Get Reports (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{admin_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/reports",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "reports"]
+                        },
+                        "description": "### Endpoint\nGET /api/admin/reports\n\n### Authentication\nRequired (Admin token)\n\n### Query Parameters\n- `status`: `pending`, `resolved`, `rejected`\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 3,\n    \"reports\": [ ... ]\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "40. Resolve Report",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{admin_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"adminNote\": \"Content removed, warning issued\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/reports/{{report_id}}/resolve",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "reports", "{{report_id}}", "resolve"]
+                        },
+                        "description": "### Endpoint\nPATCH /api/admin/reports/:id/resolve\n\n### Authentication\nRequired (Admin token)\n\n### Request Body\n```json\n{\n    \"adminNote\": \"Content removed, warning issued\"\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "41. Get Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{admin_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/admin/stats",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "admin", "stats"]
+                        },
+                        "description": "### Endpoint\nGET /api/admin/stats\n\n### Authentication\nRequired (Admin token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"stats\": {\n        \"users\": { \"total\": 10, \"suspended\": 1 },\n        \"posts\": { \"total\": 25, \"active\": 20, \"sold\": 3, \"closed\": 2 },\n        \"reports\": { \"pending\": 2 }\n    }\n}\n```"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "AI",
+            "item": [
+                {
+                    "name": "42. What Could I Make?",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"material\": \"wine bottles\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ai/what-could-i-make",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "ai", "what-could-i-make"]
+                        },
+                        "description": "### Endpoint\nPOST /api/ai/what-could-i-make\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"material\": \"wine bottles\"\n}\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"material\": \"wine bottles\",\n    \"ideas\": [\n        {\n            \"title\": \"Wine Bottle Candle Holder\",\n            \"description\": \"Transform wine bottles into elegant candle holders\",\n            \"steps\": [\"Clean the bottle\", \"Cut the top\", \"Sand the edge\", \"Insert candle\"],\n            \"difficulty\": \"easy\"\n        },\n        ...\n    ]\n}\n```\n\n### Error Responses\n- 400: Material is required / too long\n- 401: No token provided\n- 502: AI service unavailable\n\n### Testing\n1. Login and copy token\n2. Send POST with a material name\n3. Get 5 creative ideas back"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "43. Get My Matches",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/matches",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "matches"]
+                        },
+                        "description": "### Endpoint\nGET /api/matches\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 1,\n    \"matches\": [\n        {\n            \"_id\": \"...\",\n            \"buyPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"buy\", \"user\": { \"username\": \"...\" } },\n            \"sellPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"sell\", \"user\": { \"username\": \"...\" } },\n            \"buyerNotified\": true,\n            \"sellerNotified\": true\n        }\n    ]\n}\n```\n\n### Error Responses\n- 401: No token provided"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "44. Get Match Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/matches/{{match_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "matches", "{{match_id}}"]
+                        },
+                        "description": "### Endpoint\nGET /api/matches/:id\n\n### Authentication\nRequired (Bearer token, participants only)\n\n### URL Parameters\n- `id`: The match's ObjectId\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"match\": {\n        \"_id\": \"...\",\n        \"buyPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"buy\", \"price\": {}, \"quantity\": {}, \"user\": { \"username\": \"...\", \"name\": \"...\", \"email\": \"...\" } },\n        \"sellPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"sell\", \"price\": {}, \"quantity\": {}, \"user\": { \"username\": \"...\", \"name\": \"...\", \"email\": \"...\" } },\n        \"buyerNotified\": true,\n        \"sellerNotified\": true,\n        \"createdAt\": \"...\"\n    }\n}\n```\n\n### Error Responses\n- 400: Invalid match ID\n- 403: Not a participant\n- 404: Match not found"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}
