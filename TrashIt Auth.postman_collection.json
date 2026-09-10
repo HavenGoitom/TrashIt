@@ -990,6 +990,44 @@
                         "description": "### Endpoint\nPOST /api/ai/what-could-i-make\n\n### Authentication\nRequired (Bearer token)\n\n### Request Body\n```json\n{\n    \"material\": \"wine bottles\"\n}\n```\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"material\": \"wine bottles\",\n    \"ideas\": [\n        {\n            \"title\": \"Wine Bottle Candle Holder\",\n            \"description\": \"Transform wine bottles into elegant candle holders\",\n            \"steps\": [\"Clean the bottle\", \"Cut the top\", \"Sand the edge\", \"Insert candle\"],\n            \"difficulty\": \"easy\"\n        },\n        ...\n    ]\n}\n```\n\n### Error Responses\n- 400: Material is required / too long\n- 401: No token provided\n- 502: AI service unavailable\n\n### Testing\n1. Login and copy token\n2. Send POST with a material name\n3. Get 5 creative ideas back"
                     },
                     "response": []
+                },
+                {
+                    "name": "43. Get My Matches",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/matches",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "matches"]
+                        },
+                        "description": "### Endpoint\nGET /api/matches\n\n### Authentication\nRequired (Bearer token)\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"count\": 1,\n    \"matches\": [\n        {\n            \"_id\": \"...\",\n            \"buyPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"buy\", \"user\": { \"username\": \"...\" } },\n            \"sellPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"sell\", \"user\": { \"username\": \"...\" } },\n            \"buyerNotified\": true,\n            \"sellerNotified\": true\n        }\n    ]\n}\n```\n\n### Error Responses\n- 401: No token provided"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "44. Get Match Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/matches/{{match_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "matches", "{{match_id}}"]
+                        },
+                        "description": "### Endpoint\nGET /api/matches/:id\n\n### Authentication\nRequired (Bearer token, participants only)\n\n### URL Parameters\n- `id`: The match's ObjectId\n\n### Successful Response (200)\n```json\n{\n    \"success\": true,\n    \"match\": {\n        \"_id\": \"...\",\n        \"buyPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"buy\", \"price\": {}, \"quantity\": {}, \"user\": { \"username\": \"...\", \"name\": \"...\", \"email\": \"...\" } },\n        \"sellPost\": { \"_id\": \"...\", \"title\": \"...\", \"type\": \"sell\", \"price\": {}, \"quantity\": {}, \"user\": { \"username\": \"...\", \"name\": \"...\", \"email\": \"...\" } },\n        \"buyerNotified\": true,\n        \"sellerNotified\": true,\n        \"createdAt\": \"...\"\n    }\n}\n```\n\n### Error Responses\n- 400: Invalid match ID\n- 403: Not a participant\n- 404: Match not found"
+                    },
+                    "response": []
                 }
             ]
         }
