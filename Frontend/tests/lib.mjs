@@ -52,8 +52,21 @@ export const createdUsers = [];
 export async function registerUser(tag) {
   const uname = PREFIX + (tag || "u") + Math.floor(Math.random() * 10000);
   const body = { username: uname, name: uname, email: `${uname}@example.com`, password: "Passw0rd!123" };
-  const r = await request("POST", "/api/auth/register", body);
-  const rec = { tag: tag || "u", username: uname, password: body.password, token: r.data?.token, user: r.data?.user };
+  // Retry up to 3 times on rate-limit / transient errors
+  let r;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    r = await request("POST", "/api/auth/register", body);
+    if (r.status === 201 || r.status === 200) break;
+    if (r.status === 429 || r.status >= 500) {
+      await new Promise((res) => setTimeout(res, 1500 * attempt));
+      // Slightly mutate username/email to avoid duplicate conflict on retry
+      body.username = uname + "_r" + attempt;
+      body.email = `${body.username}@example.com`;
+    } else {
+      break;
+    }
+  }
+  const rec = { tag: tag || "u", username: body.username, password: body.password, token: r.data?.token, user: r.data?.user };
   if (r.data?.user) createdUsers.push(rec);
   return { rec, res: r };
 }

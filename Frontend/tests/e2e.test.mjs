@@ -52,6 +52,8 @@ async function runAll() {
       total.fail++;
       console.log("  suite threw:", e?.message);
     }
+    // Pause between suites to avoid rate limiting on shared/free-tier backends
+    await new Promise((r) => setTimeout(r, 2000));
   }
 
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
