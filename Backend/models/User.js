@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-// Weak passwords that should be rejected
-const WEAK_PASSWORDS = ["password", "12345678", "qwerty", "password123", "123456789", "qwerty123", "abc12345", "password1"];
 
 function validatePasswordStrength(password) {
     if (!password || typeof password !== "string") {

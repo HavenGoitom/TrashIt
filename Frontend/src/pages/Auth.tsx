@@ -13,7 +13,7 @@ interface PasswordChecks {
   hasLowercase: boolean;
   hasNumber: boolean;
   hasSpecial: boolean;
-  notCommon: true;
+  notCommon: boolean;
 }
 
 function checkPasswordStrength(password: string): PasswordChecks {
@@ -236,7 +236,6 @@ export function Register() {
     else if (!checks.hasLowercase) e.password = "Need a lowercase letter";
     else if (!checks.hasNumber) e.password = "Need a number";
     else if (!checks.hasSpecial) e.password = "Need a special character (!@#$%)";
-    else if (!checks.notCommon) e.password = "Password is too common or weak";
     if (form.password !== confirmPassword) e.confirmPassword = "Passwords do not match";
     return e;
   }

@@ -7,8 +7,6 @@ const generateToken = (username, role) => {
     });
 };
 
-// Strong password validation
-const WEAK_PASSWORDS = ["password", "12345678", "qwerty", "password123", "123456789", "qwerty123", "abc12345", "password1", "iloveyou", "admin123"];
 
 function validatePassword(password) {
     const errors = [];
