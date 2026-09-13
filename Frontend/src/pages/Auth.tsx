@@ -13,7 +13,7 @@ interface PasswordChecks {
   hasLowercase: boolean;
   hasNumber: boolean;
   hasSpecial: boolean;
-  notCommon: boolean;
+  notCommon: true;
 }
 
 function checkPasswordStrength(password: string): PasswordChecks {
@@ -23,14 +23,14 @@ function checkPasswordStrength(password: string): PasswordChecks {
     hasLowercase: /[a-z]/.test(password),
     hasNumber: /[0-9]/.test(password),
     hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
-    notCommon: !/(password|12345678|qwerty|password123|123456789|qwerty123|abc12345|password1|iloveyou|admin123|welcome1)/i.test(password),
+    notCommon: true,
   };
 }
 
 function PasswordStrength({ password, show }: { password: string; show: boolean }) {
   const checks = useMemo(() => checkPasswordStrength(password), [password]);
   const passed = Object.values(checks).filter(Boolean).length;
-  const total = 6;
+  const total = 5;
 
   if (!show || !password) return null;
 
@@ -40,7 +40,6 @@ function PasswordStrength({ password, show }: { password: string; show: boolean 
     { key: "hasLowercase", label: "One lowercase letter (a-z)", met: checks.hasLowercase },
     { key: "hasNumber", label: "One number (0-9)", met: checks.hasNumber },
     { key: "hasSpecial", label: "One special character (!@#$%)", met: checks.hasSpecial },
-    { key: "notCommon", label: "Not a common weak password", met: checks.notCommon },
   ];
 
   return (

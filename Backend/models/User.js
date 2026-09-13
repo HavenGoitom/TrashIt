@@ -23,12 +23,6 @@ function validatePasswordStrength(password) {
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
         return "Password must contain at least one special character (!@#$%^&*)";
     }
-    const lower = password.toLowerCase();
-    for (const weak of WEAK_PASSWORDS) {
-        if (lower === weak || lower.includes(weak)) {
-            return "Password is too common or weak. Please choose a stronger password.";
-        }
-    }
     return null; // valid
 }
 

@@ -17,7 +17,6 @@ function validatePassword(password) {
     if (!/[a-z]/.test(password)) errors.push("Password must contain at least one lowercase letter");
     if (!/[0-9]/.test(password)) errors.push("Password must contain at least one number");
     if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) errors.push("Password must contain at least one special character (!@#$%^&*)");
-    if (WEAK_PASSWORDS.includes(password.toLowerCase())) errors.push("Password is too common or weak");
     return errors;
 }
 
