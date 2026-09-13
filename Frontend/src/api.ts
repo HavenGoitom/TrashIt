@@ -30,11 +30,24 @@ async function request<T>(
     ...authHeader(token ?? null),
     ...(options.headers as Record<string, string> | undefined),
   };
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
-  const data = await res.json();
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (networkErr) {
+    // Network failure: server unreachable, DNS error, CORS blocked, etc.
+    console.error(`[TrashIt API] Network error reaching ${BASE_URL}${path}:`, networkErr);
+    throw new Error(`Cannot reach the server. Please check your connection and try again.`);
+  }
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    // Non-JSON response (server error page, empty body, etc.)
+    throw new Error(res.ok ? "Unexpected server response" : `Request failed (${res.status})`);
+  }
   if (!res.ok) {
       if (res.status === 401) {
         window.dispatchEvent(new CustomEvent('trashit:unauthorized'));

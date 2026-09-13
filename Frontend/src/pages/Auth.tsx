@@ -127,13 +127,6 @@ export function Login() {
           <p className="text-brown-300 text-lg leading-relaxed max-w-sm">
             Your community of reusers is waiting. Sign in to continue giving things a second life.
           </p>
-          {/* Demo hint */}
-          <div className="mt-8 bg-warm-white/10 rounded-2xl px-5 py-4 border border-cream-200/20">
-            <p className="text-cream-200 text-sm font-semibold mb-2">Demo credentials</p>
-            <p className="text-brown-300 text-sm">Email: <span className="text-yellow-400">sara@example.com</span></p>
-            <p className="text-brown-300 text-sm">Password: <span className="text-yellow-400">password123</span></p>
-            <p className="text-brown-300 text-sm mt-1">Admin: <span className="text-yellow-400">admin@trashit.com</span></p>
-          </div>
         </div>
       </div>
 
