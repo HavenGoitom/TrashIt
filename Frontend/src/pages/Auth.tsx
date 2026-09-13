@@ -5,7 +5,7 @@ import { Button, Input, useToast } from "../components/ui";
 import { DoodleRecycle, DoodleStar, DoodleLeaf } from "../components/Doodles";
 import { api } from "../api";
 
-// ─── Password Strength Checker ────────────────────────────────────────────────
+// â”€â”€â”€ Password Strength Checker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface PasswordChecks {
   minLength: boolean;
@@ -23,7 +23,7 @@ function checkPasswordStrength(password: string): PasswordChecks {
     hasLowercase: /[a-z]/.test(password),
     hasNumber: /[0-9]/.test(password),
     hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
-    notCommon: !/^(password|12345678|qwerty|password123|123456789|abc123|letmein|admin123|welcome1)$/i.test(password),
+    notCommon: !/(password|12345678|qwerty|password123|123456789|qwerty123|abc12345|password1|iloveyou|admin123|welcome1)/i.test(password),
   };
 }
 
@@ -76,7 +76,7 @@ function PasswordStrength({ password, show }: { password: string; show: boolean 
   );
 }
 
-// ─── Login Page ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Login Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function Login() {
   const { navigate } = useRouter();
@@ -116,7 +116,7 @@ export function Login() {
     <div className="min-h-full flex">
       {ToastComponent}
 
-      {/* Left panel — illustration */}
+      {/* Left panel â€” illustration */}
       <div className="hidden lg:flex flex-col items-center justify-center w-1/2 dark-section p-12 relative overflow-hidden">
         <div className="absolute top-12 left-12 animate-wiggle"><DoodleStar size={32} color="#e8b84b" /></div>
         <div className="absolute bottom-20 right-12 animate-float"><DoodleLeaf size={32} color="#5a7a4a" /></div>
@@ -138,7 +138,7 @@ export function Login() {
         </div>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel â€” form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-cream-50">
         <div className="w-full max-w-md">
           {/* Logo */}
@@ -208,7 +208,7 @@ export function Login() {
   );
 }
 
-// ─── Register Page ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Register Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function Register() {
   const { navigate } = useRouter();
@@ -287,7 +287,7 @@ export function Register() {
         </div>
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel â€” form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-cream-50 overflow-y-auto">
         <div className="w-full max-w-md py-8">
           <button onClick={() => navigate("landing")} className="flex items-center gap-2 mb-8">
@@ -339,9 +339,9 @@ export function Register() {
               value={form.password}
               onChange={set("password")}
               error={errors.password}
-              placeholder="At least 6 characters"
+              placeholder="At least 8 characters"
               autoComplete="new-password"
-              hint="At least 6 characters"
+              hint="At least 8 characters with uppercase, number, and symbol"
               leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
               rightIcon={
                 <button type="button" onClick={() => setShowPw(!showPw)} className="hover:text-brown-600">
@@ -379,3 +379,5 @@ export function Register() {
     </div>
   );
 }
+
+

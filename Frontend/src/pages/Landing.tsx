@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { useRouter } from "../context";
 import { HeroIllustration, DoodleStar, DoodleLeaf, DoodleRecycle, DoodleSpark, DoodleClusterLeft, DoodleClusterRight } from "../components/Doodles";
-import { MOCK_POSTS } from "../api";
+import { api } from "../api";
 import { PriceDisplay, Badge } from "../components/ui";
+import type { Post } from "../types";
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
@@ -15,11 +17,15 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
   );
 }
 
-function MiniPostCard({ post }: { post: typeof MOCK_POSTS[0] }) {
+function MiniPostCard({ post }: { post: Post }) {
+  const { navigate } = useRouter();
   return (
-    <div className="bg-warm-white rounded-2xl overflow-hidden border border-cream-200 flex-shrink-0 w-64">
+    <div
+      className="bg-warm-white rounded-2xl overflow-hidden border border-cream-200 flex-shrink-0 w-64 cursor-pointer hover:border-orange-200 transition-colors"
+      onClick={() => navigate("post-detail", { postId: post._id })}
+    >
       <div className="h-36 relative overflow-hidden bg-cream-100">
-        {post.images[0] && <img src={post.images[0]} alt={post.title} className="w-full h-full object-cover" />}
+        {post.images?.[0] && <img src={post.images[0]} alt={post.title} className="w-full h-full object-cover" />}
         <div className="absolute top-2 left-2">
           <Badge variant={post.type}>{post.type === "sell" ? "Sell" : "Buy"}</Badge>
         </div>
@@ -34,8 +40,18 @@ function MiniPostCard({ post }: { post: typeof MOCK_POSTS[0] }) {
 
 export default function Landing() {
   const { navigate } = useRouter();
+  const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const previewPosts = MOCK_POSTS.filter((p) => p.status === "active").slice(0, 6);
+  useEffect(() => {
+    api.posts.getAll({ status: "active", limit: "6" }).then((res) => {
+      setPreviewPosts(res.posts.slice(0, 6));
+    }).catch(() => {
+      setPreviewPosts([]);
+    }).finally(() => {
+      setLoading(false);
+    });
+  }, []);
 
   return (
     <div className="min-h-full">
@@ -158,15 +174,21 @@ export default function Landing() {
       <section className="bg-cream-100 border-y border-cream-200 py-3">
         <div className="flex items-center gap-3 overflow-hidden">
           <span className="flex-shrink-0 px-4 py-1 bg-orange-500 text-white text-xs font-bold rounded-full ml-4">LIVE</span>
-          <div className="flex items-center gap-4 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
-            {MOCK_POSTS.filter(p => p.status === "active").map((p) => (
-              <div key={p._id} className="flex items-center gap-2 flex-shrink-0">
-                <Badge variant={p.type}>{p.type}</Badge>
-                <span className="text-sm text-brown-600 font-medium">{p.title}</span>
-                <span className="text-brown-300 text-xs">·</span>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <span className="text-sm text-brown-400">Loading posts...</span>
+          ) : previewPosts.length > 0 ? (
+            <div className="flex items-center gap-4 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
+              {previewPosts.map((p) => (
+                <div key={p._id} className="flex items-center gap-2 flex-shrink-0">
+                  <Badge variant={p.type}>{p.type}</Badge>
+                  <span className="text-sm text-brown-600 font-medium">{p.title}</span>
+                  <span className="text-brown-300 text-xs">·</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-sm text-brown-400">No active posts yet</span>
+          )}
         </div>
       </section>
 
