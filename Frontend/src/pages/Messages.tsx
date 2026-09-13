@@ -3,7 +3,7 @@ import { useAuth } from "../context";
 import { useRouter } from "../context";
 import { Avatar, Spinner } from "../components/ui";
 import { EmptyState } from "../components/EmptyState";
-import { api } from "../api";
+import { api, getSocket, initSocket } from "../api";
 import type { Conversation, Message } from "../types";
 
 function formatTime(iso: string) {
@@ -94,8 +94,33 @@ export default function Messages() {
         const found = res.conversations.find(c => c._id === params.conversationId);
         if (found) loadConversation(found);
       }
-    }).finally(() => setLoading(false));
+    }).catch(() => setConversations([])).finally(() => setLoading(false));
   }, [token]);
+
+  // Join conversation room and listen for real-time messages
+  useEffect(() => {
+    if (!activeConv || !token) return;
+    const socket = getSocket() || initSocket(token);
+    socket.emit("join_conversation", { conversationId: activeConv._id });
+
+    const handleNewMessage = (msg: Message) => {
+      if (msg.conversation === activeConv._id) {
+        setMessages(prev => {
+          // Avoid duplicates
+          if (prev.some(m => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      }
+    };
+
+    socket.on("new_message", handleNewMessage);
+
+    return () => {
+      socket.emit("leave_conversation", { conversationId: activeConv._id });
+      socket.off("new_message", handleNewMessage);
+    };
+  }, [activeConv, token]);
 
   async function loadConversation(conv: Conversation) {
     setActiveConv(conv);
@@ -111,18 +136,16 @@ export default function Messages() {
     }
   }
 
-  async function sendMessage() {
+  function sendMessage() {
     if (!newMsg.trim() || !activeConv || !user) return;
     setSending(true);
-    const optimistic: Message = {
-      _id: "opt_" + Date.now(),
-      conversation: activeConv._id,
-      sender: { _id: user._id, username: user.username, name: user.name },
-      content: newMsg.trim(),
-      read: false,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages(ms => [...ms, optimistic]);
+    const socket = getSocket();
+    if (socket) {
+      socket.emit("send_message", {
+        conversationId: activeConv._id,
+        content: newMsg.trim(),
+      });
+    }
     setNewMsg("");
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     setSending(false);

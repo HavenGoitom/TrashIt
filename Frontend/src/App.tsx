@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { RouterProvider, AuthProvider, useRouter, useAuth } from "./context";
 import { Layout } from "./components/Layout";
-import { api } from "./api";
+import { api, initSocket, getSocket } from "./api";
+import type { Notification } from "./types";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -23,8 +24,40 @@ import Admin from "./pages/Admin";
 
 function AppRouter() {
   const { page } = useRouter();
-  const { isLoggedIn, token } = useAuth();
+  const { isLoggedIn, token, logout } = useAuth();
   const [notifCount, setNotifCount] = useState(0);
+  const [authRestored, setAuthRestored] = useState(false);
+
+  // Restore auth on mount — validate stored token with backend
+  useEffect(() => {
+    const storedToken = localStorage.getItem("trashit_token");
+    if (storedToken) {
+      // Token exists in storage — validate it with the backend
+      api.auth.me(storedToken).then(() => {
+        // Token is valid — user already restored from localStorage in context
+      }).catch(() => {
+        // Token invalid or expired — clear storage and log out
+        logout();
+      }).finally(() => {
+        setAuthRestored(true);
+      });
+    } else {
+      setAuthRestored(true);
+    }
+  }, []);
+
+  // Initialize socket and listen for real-time notifications
+  useEffect(() => {
+    if (!isLoggedIn || !token) return;
+    const socket = initSocket(token);
+    const handleNotification = (notification: Notification) => {
+      setNotifCount(prev => prev + 1);
+    };
+    socket.on("new_notification", handleNotification);
+    return () => {
+      socket.off("new_notification", handleNotification);
+    };
+  }, [isLoggedIn, token]);
 
   // Poll notification count
   useEffect(() => {
@@ -36,6 +69,15 @@ function AppRouter() {
     const interval = setInterval(fetchCount, 30000);
     return () => clearInterval(interval);
   }, [isLoggedIn, token]);
+
+  // Show nothing while restoring auth
+  if (!authRestored) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-cream-50">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Pages that don't use the Layout wrapper
   const standalonePages: typeof page[] = ["landing", "login", "register"];

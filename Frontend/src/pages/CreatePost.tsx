@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "../context";
 import { useAuth } from "../context";
 import { Button, Input, Textarea, useToast } from "../components/ui";
 import { BackButton } from "../components/Layout";
 import { DoodleBox, DoodleStar } from "../components/Doodles";
-import { api, MOCK_POSTS } from "../api";
+import { api, uploadImages } from "../api";
 import type { Post } from "../types";
 
 type PostType = "sell" | "buy";
@@ -14,6 +14,7 @@ export default function CreatePost() {
   const { params, navigate } = useRouter();
   const { token } = useAuth();
   const { showToast, ToastComponent } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!params.postId;
   const [editPost, setEditPost] = useState<Post | null>(null);
@@ -24,6 +25,9 @@ export default function CreatePost() {
   const [step, setStep] = useState(isEditing ? 2 : 1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -39,8 +43,8 @@ export default function CreatePost() {
 
   useEffect(() => {
     if (isEditing && params.postId) {
-      const found = MOCK_POSTS.find(p => p._id === params.postId);
-      if (found) {
+      api.posts.getOne(params.postId).then((res) => {
+        const found = res.post;
         setEditPost(found);
         setType(found.type);
         setForm({
@@ -56,13 +60,40 @@ export default function CreatePost() {
         });
         setPriceMode(found.price.fixed !== undefined ? "fixed" : "range");
         setQtyMode(found.quantity.fixed !== undefined ? "fixed" : "range");
-      }
+        if (found.images.length > 0) {
+          setImagePreviews(found.images);
+        }
+      }).catch(() => {
+        showToast("Failed to load post for editing", "error");
+        navigate("my-posts");
+      });
     }
   }, [isEditing, params.postId]);
 
   function setField(key: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files) return;
+    const fileArray = Array.from(files).slice(0, 5 - imageFiles.length);
+    const newFiles = [...imageFiles, ...fileArray].slice(0, 5);
+    setImageFiles(newFiles);
+    const previews = newFiles.map(file => URL.createObjectURL(file));
+    setImagePreviews(prev => {
+      prev.forEach(url => URL.revokeObjectURL(url));
+      return previews;
+    });
+  }
+
+  function removeImage(index: number) {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
   }
 
   function validate() {
@@ -95,6 +126,20 @@ export default function CreatePost() {
       ? { fixed: Number(form.qtyFixed) }
       : { min: Number(form.qtyMin), max: Number(form.qtyMax) };
 
+    let images = imagePreviews;
+    if (imageFiles.length > 0) {
+      setUploadingImages(true);
+      try {
+        images = await uploadImages(imageFiles, token);
+      } catch (uploadErr: unknown) {
+        showToast(uploadErr instanceof Error ? uploadErr.message : "Image upload failed", "error");
+        setUploadingImages(false);
+        setLoading(false);
+        return;
+      }
+      setUploadingImages(false);
+    }
+
     const postData = {
       title: form.title,
       description: form.description,
@@ -102,7 +147,7 @@ export default function CreatePost() {
       price,
       quantity,
       location: form.location,
-      images: [],
+      images,
     };
 
     try {
@@ -173,7 +218,7 @@ export default function CreatePost() {
                   </svg>
                 </div>
                 <div className="mb-1 px-2 py-0.5 inline-block rounded-full bg-blue-500/10 text-blue-600 text-xs font-bold uppercase">Buy</div>
-                <h3 className="font-semibold text-brown-800 mt-2 mb-1">I&apos;m looking for something</h3>
+                <h3 className="font-semibold text-brown-800 mt-2 mb-1">I'm looking for something</h3>
                 <p className="text-xs text-brown-400 leading-relaxed">I need a specific material or item from the community.</p>
               </button>
             </div>
@@ -230,21 +275,49 @@ export default function CreatePost() {
           {/* Images */}
           <div className="bg-warm-white rounded-2xl border border-cream-200 p-6">
             <h3 className="font-semibold text-brown-800 mb-3">Images (optional)</h3>
-            <div className="border-2 border-dashed border-cream-300 rounded-2xl p-10 text-center hover:border-orange-300 transition-colors cursor-pointer relative group">
-              <div className="flex flex-col items-center gap-3">
-                <div className="animate-bounce-gentle">
-                  <DoodleBox size={40} color="#b89672" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            {imagePreviews.length > 0 && (
+              <div className="flex gap-3 mb-4 flex-wrap">
+                {imagePreviews.map((preview, i) => (
+                  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-cream-200">
+                    <img src={preview} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-400 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-500"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {imagePreviews.length < 5 && (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-cream-300 rounded-2xl p-10 text-center hover:border-orange-300 transition-colors cursor-pointer relative group"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className="animate-bounce-gentle">
+                    <DoodleBox size={40} color="#b89672" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-brown-600">Drop images here or click to upload</p>
+                    <p className="text-xs text-brown-400 mt-1">PNG, JPG up to 5MB each · Max 5 images {uploadingImages && "· Uploading..."}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-brown-600">Drop images here or click to upload</p>
-                  <p className="text-xs text-brown-400 mt-1">PNG, JPG up to 5MB each · Max 5 images</p>
+                <div className="absolute top-3 right-4 animate-wiggle opacity-50">
+                  <DoodleStar size={18} color="#e8b84b" />
                 </div>
               </div>
-              {/* Decorative stars */}
-              <div className="absolute top-3 right-4 animate-wiggle opacity-50">
-                <DoodleStar size={18} color="#e8b84b" />
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Price */}

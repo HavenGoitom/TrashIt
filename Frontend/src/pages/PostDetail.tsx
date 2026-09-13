@@ -4,7 +4,7 @@ import { useAuth } from "../context";
 import { Button, Badge, PriceDisplay, QuantityDisplay, Modal, Textarea, useToast } from "../components/ui";
 import { Avatar } from "../components/ui";
 import { BackButton } from "../components/Layout";
-import { api, MOCK_POSTS } from "../api";
+import { api } from "../api";
 import type { Post } from "../types";
 
 function formatDate(iso: string) {
@@ -38,9 +38,7 @@ export default function PostDetail() {
     api.posts.getOne(postId).then((res) => {
       setPost(res.post);
     }).catch(() => {
-      // fallback to mock
-      const found = MOCK_POSTS.find(p => p._id === postId);
-      if (found) setPost(found);
+      setPost(null);
     }).finally(() => setLoading(false));
 
     if (isLoggedIn && token) {
@@ -71,8 +69,8 @@ export default function PostDetail() {
     if (!isLoggedIn || !token) { navigate("login"); return; }
     setMsgLoading(true);
     try {
-      await api.conversations.create(postId!, token);
-      navigate("messages");
+      const res = await api.conversations.create(postId!, token);
+      navigate("messages", { conversationId: res.conversation._id });
       showToast("Conversation started!", "success");
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : "Failed to start conversation", "error");
@@ -320,7 +318,7 @@ export default function PostDetail() {
       <Modal isOpen={reportOpen} onClose={() => setReportOpen(false)} title="Report this post">
         <div className="space-y-4">
           <p className="text-sm text-brown-500">
-            Help us keep TrashIt safe. Tell us what&apos;s wrong with this post.
+            Help us keep TrashIt safe. Tell us what's wrong with this post.
           </p>
           <Textarea
             label="What's the issue?"

@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context";
 import { useRouter } from "../context";
 import { Tabs, SearchBar, SkeletonCard } from "../components/ui";
-import { PostCard } from "../components/PostCard";
+import { PostCard, PostCardSkeleton } from "../components/PostCard";
 import { EmptyState } from "../components/EmptyState";
 import { DoodleStar, DoodleSpark } from "../components/Doodles";
-import { api, MOCK_POSTS } from "../api";
+import { api } from "../api";
 import type { Post } from "../types";
 
 function GreetingBanner({ name }: { name: string }) {
@@ -53,6 +53,8 @@ export default function Discover() {
   const [search, setSearch] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
@@ -62,10 +64,16 @@ export default function Discover() {
 
     api.posts.getAll(params).then((res) => {
       setPosts(res.posts.filter((p) => p.status === "active"));
-    }).finally(() => setLoading(false));
+    }).catch(() => setPosts([])).finally(() => setLoading(false));
   }, [activeTab, search]);
 
-  const featuredPosts = MOCK_POSTS.filter(p => p.status === "active").slice(0, 4);
+  // Load featured posts from real API
+  useEffect(() => {
+    setFeaturedLoading(true);
+    api.posts.getAll({ status: "active", sort: "newest", limit: "4" }).then((res) => {
+      setFeaturedPosts(res.posts.slice(0, 4));
+    }).catch(() => setFeaturedPosts([])).finally(() => setFeaturedLoading(false));
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
@@ -115,11 +123,17 @@ export default function Discover() {
               See all →
             </button>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {featuredPosts.map((post) => (
-              <PostCard key={post._id} post={post} />
-            ))}
-          </div>
+          {featuredLoading ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => <PostCardSkeleton key={i} />)}
+            </div>
+          ) : featuredPosts.length > 0 ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {featuredPosts.map((post) => (
+                <PostCard key={post._id} post={post} />
+              ))}
+            </div>
+          ) : null}
         </section>
       )}
 

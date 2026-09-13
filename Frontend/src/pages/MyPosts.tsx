@@ -3,7 +3,7 @@ import { useAuth } from "../context";
 import { useRouter } from "../context";
 import { Button, Tabs, Badge, PriceDisplay } from "../components/ui";
 import { EmptyState } from "../components/EmptyState";
-import { api, MOCK_POSTS } from "../api";
+import { api } from "../api";
 import type { Post } from "../types";
 
 function PostRow({ post, onStatusChange, onDelete }: { post: Post; onStatusChange: (id: string, status: string) => void; onDelete: (id: string) => void }) {
@@ -91,14 +91,12 @@ export default function MyPosts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!token) return;
     setLoading(true);
-    // In real app would filter by user; for demo use mock
-    const myPosts = MOCK_POSTS.filter(p => p.user._id === "u1");
-    setTimeout(() => {
-      setPosts(myPosts);
-      setLoading(false);
-    }, 400);
-  }, []);
+    api.posts.getAll().then((res) => {
+      setPosts(res.posts);
+    }).catch(() => setPosts([])).finally(() => setLoading(false));
+  }, [token]);
 
   function handleStatusChange(id: string, status: string) {
     setPosts(ps => ps.map(p => p._id === id ? { ...p, status: status as Post["status"] } : p));

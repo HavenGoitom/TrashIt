@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useAuth } from "../context";
 import { useRouter } from "../context";
 import { Button, Avatar, Badge, Tabs } from "../components/ui";
 import { api } from "../api";
 import type { User, Post, Report, AdminStats } from "../types";
-import { MOCK_ADMIN_STATS } from "../api";
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Stat Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function StatCard({ label, value, sub, color }: { label: string; value: number | string; sub?: string; color?: string }) {
   return (
@@ -18,7 +17,7 @@ function StatCard({ label, value, sub, color }: { label: string; value: number |
   );
 }
 
-// ─── Users tab ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Users tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function UsersTab({ token }: { token: string }) {
   const [users, setUsers] = useState<User[]>([]);
@@ -83,7 +82,7 @@ function UsersTab({ token }: { token: string }) {
   );
 }
 
-// ─── Posts tab ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Posts tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function PostsTab({ token }: { token: string }) {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -144,7 +143,7 @@ function PostsTab({ token }: { token: string }) {
   );
 }
 
-// ─── Reports tab ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Reports tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ReportsTab({ token }: { token: string }) {
   const [reports, setReports] = useState<Report[]>([]);
@@ -225,14 +224,18 @@ function ReportsTab({ token }: { token: string }) {
   );
 }
 
-// ─── Stats tab ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Stats tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function StatsTab({ token }: { token: string }) {
-  const [stats, setStats] = useState<AdminStats>(MOCK_ADMIN_STATS);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.admin.getStats(token).then(res => setStats(res.stats)).catch(() => {});
+    api.admin.getStats(token).then(res => setStats(res.stats)).catch(() => setStats(null)).finally(() => setLoading(false));
   }, [token]);
+
+  if (loading) return <div className="skeleton rounded-2xl h-64" />;
+  if (!stats) return <div className="bg-warm-white rounded-2xl border border-cream-200 p-8 text-center text-brown-400 text-sm">Failed to load statistics.</div>;
 
   return (
     <div className="space-y-6">
@@ -270,12 +273,12 @@ function StatsTab({ token }: { token: string }) {
             <div key={row.label}>
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-brown-700">{row.label}</span>
-                <span className="text-brown-400">{row.count} ({Math.round((row.count / row.total) * 100)}%)</span>
+                <span className="text-brown-400">{row.count} ({row.total > 0 ? Math.round((row.count / row.total) * 100) : 0}%)</span>
               </div>
               <div className="h-2 bg-cream-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${row.color} rounded-full transition-all duration-700`}
-                  style={{ width: `${(row.count / row.total) * 100}%` }}
+                  style={{ width: `${row.total > 0 ? (row.count / row.total) * 100 : 0}%` }}
                 />
               </div>
             </div>
@@ -286,12 +289,19 @@ function StatsTab({ token }: { token: string }) {
   );
 }
 
-// ─── Admin Page ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Admin Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function Admin() {
   const { isAdmin, token } = useAuth();
   const { navigate } = useRouter();
   const [tab, setTab] = useState("stats");
+  const [quickStats, setQuickStats] = useState<AdminStats | null>(null);
+
+  useEffect(() => {
+    if (token) {
+      api.admin.getStats(token).then(res => setQuickStats(res.stats)).catch(() => {});
+    }
+  }, [token]);
 
   if (!isAdmin) {
     return (
@@ -317,11 +327,19 @@ export default function Admin() {
       </div>
 
       {/* Quick stats bar */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <StatCard label="Total users" value={MOCK_ADMIN_STATS.users.total} />
-        <StatCard label="Active posts" value={MOCK_ADMIN_STATS.posts.active} color="text-olive-600" />
-        <StatCard label="Pending reports" value={MOCK_ADMIN_STATS.reports.pending} color="text-yellow-600" sub="Need review" />
-      </div>
+      {quickStats ? (
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <StatCard label="Total users" value={quickStats.users.total} />
+          <StatCard label="Active posts" value={quickStats.posts.active} color="text-olive-600" />
+          <StatCard label="Pending reports" value={quickStats.reports.pending} color="text-yellow-600" sub="Need review" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="skeleton rounded-2xl h-24" />
+          <div className="skeleton rounded-2xl h-24" />
+          <div className="skeleton rounded-2xl h-24" />
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs
@@ -329,7 +347,7 @@ export default function Admin() {
           { key: "stats", label: "Statistics" },
           { key: "users", label: "Users" },
           { key: "posts", label: "Posts" },
-          { key: "reports", label: "Reports", count: MOCK_ADMIN_STATS.reports.pending },
+          { key: "reports", label: "Reports", count: quickStats?.reports.pending },
         ]}
         active={tab}
         onChange={setTab}

@@ -1,3 +1,4 @@
+﻿import { io, Socket } from "socket.io-client";
 import type {
   User,
   Post,
@@ -11,8 +12,9 @@ import type {
   AdminStats,
 } from "./types";
 
-const BASE_URL = "http://localhost:5000";
-const USE_MOCK = true;
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || BASE_URL;
+const USE_MOCK = false;
 
 function authHeader(token: string | null): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -33,8 +35,56 @@ async function request<T>(
     headers,
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Request failed");
+  if (!res.ok) {
+      if (res.status === 401) {
+        window.dispatchEvent(new CustomEvent('trashit:unauthorized'));
+      }
+      throw new Error(data.message || 'Request failed');
+    }
   return data;
+}
+
+// ─── Socket.io ─────────────────────────────────────────────────────────────────
+
+let socket: Socket | null = null;
+
+export function initSocket(token: string): Socket {
+  if (socket?.connected) return socket;
+  socket = io(SOCKET_URL, {
+    auth: { token },
+    autoConnect: true,
+  });
+  return socket;
+}
+
+export function getSocket(): Socket | null {
+  return socket;
+}
+
+export function disconnectSocket(): void {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+}
+
+// ─── Image Upload ──────────────────────────────────────────────────────────────
+
+export async function uploadImages(files: FileList | File[], token: string): Promise<string[]> {
+  const formData = new FormData();
+  const fileArray = Array.from(files);
+  fileArray.forEach((file) => formData.append("images", file));
+
+  const res = await fetch(`${BASE_URL}/image/upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Upload failed");
+  return data.images.map((img: { url: string }) => img.url);
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────

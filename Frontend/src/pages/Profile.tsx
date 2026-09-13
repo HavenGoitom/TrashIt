@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useAuth } from "../context";
 import { useRouter } from "../context";
 import { Button, Input, Textarea, Modal, useToast, Avatar } from "../components/ui";
@@ -185,7 +185,7 @@ export default function Profile() {
       {tab === "password" && (
         <div className="bg-warm-white rounded-2xl border border-cream-200 p-6 space-y-4">
           <h2 className="font-semibold text-brown-800">Change password</h2>
-          <p className="text-sm text-brown-400">Demo: current password is &quot;password123&quot;</p>
+
           <Input label="Current password" type="password" value={pwForm.currentPassword} onChange={setPwField("currentPassword")} error={pwErrors.current} placeholder="Enter current password" />
           <Input label="New password" type="password" value={pwForm.newPassword} onChange={setPwField("newPassword")} error={pwErrors.new} placeholder="At least 6 characters" />
           <Input label="Confirm new password" type="password" value={pwForm.confirmPassword} onChange={setPwField("confirmPassword")} error={pwErrors.confirm} placeholder="Repeat new password" />

@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import type { User, Page, PageParams } from "./types";
+import { disconnectSocket } from "./api";
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,20 @@ export function useRouter() {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+const TOKEN_KEY = "trashit_token";
+const USER_KEY = "trashit_user";
+
+function getStoredToken(): string | null {
+  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+}
+
+function getStoredUser(): User | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 interface AuthContextValue {
   user: User | null;
   token: string | null;
@@ -59,22 +74,39 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(getStoredUser);
+  const [token, setToken] = useState<string | null>(getStoredToken);
 
   const login = useCallback((t: string, u: User) => {
     setToken(t);
     setUser(u);
+    try {
+      localStorage.setItem(TOKEN_KEY, t);
+      localStorage.setItem(USER_KEY, JSON.stringify(u));
+    } catch { /* storage unavailable */ }
   }, []);
 
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
+    disconnectSocket();
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    } catch { /* storage unavailable */ }
   }, []);
 
   const updateUser = useCallback((u: User) => {
     setUser(u);
+    try { localStorage.setItem(USER_KEY, JSON.stringify(u)); } catch { /* storage unavailable */ }
   }, []);
+
+  // Listen for 401/invalid token events from API
+  useEffect(() => {
+    const handleUnauthorized = () => { logout(); };
+    window.addEventListener("trashit:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("trashit:unauthorized", handleUnauthorized);
+  }, [logout]);
 
   return (
     <AuthContext.Provider
