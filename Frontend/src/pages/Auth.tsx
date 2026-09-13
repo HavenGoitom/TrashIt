@@ -97,7 +97,7 @@ export function Login() {
   async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault();
     const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
+    if (Object.keys(e).length) { setErrors(e); showToast("Please fix the highlighted fields", "error"); return; }
     setErrors({});
     setLoading(true);
     try {
@@ -236,7 +236,7 @@ export function Register() {
   async function handleSubmit(ev: React.FormEvent) {
     ev.preventDefault();
     const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
+    if (Object.keys(e).length) { setErrors(e); showToast("Please fix the highlighted fields", "error"); return; }
     setErrors({});
     setLoading(true);
     try {
@@ -345,6 +345,17 @@ export function Register() {
             />
 
             <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full rounded-xl mt-2">
+            <Input
+              label="Confirm password"
+              type={showPw ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              error={errors.confirmPassword}
+              placeholder="Re-enter your password"
+              autoComplete="new-password"
+              leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
+            />
+
               Create my account
             </Button>
 
