@@ -1,5 +1,6 @@
 {
-  "description": "Streamline project management with intuitive task tracking and collaboration tools designed for teams to enhance productivity and communication.",
+  "title": "TrashIt",
+  "description": "TrashIt — turn trash into treasure. Buy, sell and exchange reusable materials, chat in real time, and get AI-powered upcycling ideas.",
   "robots": {
     "index": false
   },
