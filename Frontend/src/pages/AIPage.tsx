@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../context";
 import { useRouter } from "../context";
-import { Button, DifficultyBadge, useToast } from "../components/ui";
+import { Button, DifficultyBadge, Badge, PriceDisplay, useToast } from "../components/ui";
 import { AILoadingChar, DoodleSpark, DoodleStar, DoodleLeaf, DoodleRecycle } from "../components/Doodles";
 import { api } from "../api";
-import type { AIIdea } from "../types";
+import type { AIIdea, Post } from "../types";
 
 const MATERIAL_SUGGESTIONS = [
   "Plastic bottles",
@@ -17,6 +17,14 @@ const MATERIAL_SUGGESTIONS = [
   "Wood scraps",
   "Old newspapers",
   "CD/DVDs",
+];
+
+const SEARCH_SUGGESTIONS = [
+  "plastic flower pots",
+  "bags from old clothes",
+  "decorations from plastic bottles",
+  "chairs from wood",
+  "things from cardboard",
 ];
 
 function IdeaCard({ idea, index }: { idea: AIIdea; index: number }) {

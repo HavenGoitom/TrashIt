@@ -1,9 +1,80 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "../context";
 import { useAuth } from "../context";
 import { Button, Input, useToast } from "../components/ui";
 import { DoodleRecycle, DoodleStar, DoodleLeaf } from "../components/Doodles";
 import { api } from "../api";
+
+// ─── Password Strength Checker ────────────────────────────────────────────────
+
+interface PasswordChecks {
+  minLength: boolean;
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  hasSpecial: boolean;
+  notCommon: boolean;
+}
+
+function checkPasswordStrength(password: string): PasswordChecks {
+  return {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
+    notCommon: !/^(password|12345678|qwerty|password123|123456789|abc123|letmein|admin123|welcome1)$/i.test(password),
+  };
+}
+
+function PasswordStrength({ password, show }: { password: string; show: boolean }) {
+  const checks = useMemo(() => checkPasswordStrength(password), [password]);
+  const passed = Object.values(checks).filter(Boolean).length;
+  const total = 6;
+
+  if (!show || !password) return null;
+
+  const requirements = [
+    { key: "minLength", label: "At least 8 characters", met: checks.minLength },
+    { key: "hasUppercase", label: "One uppercase letter (A-Z)", met: checks.hasUppercase },
+    { key: "hasLowercase", label: "One lowercase letter (a-z)", met: checks.hasLowercase },
+    { key: "hasNumber", label: "One number (0-9)", met: checks.hasNumber },
+    { key: "hasSpecial", label: "One special character (!@#$%)", met: checks.hasSpecial },
+    { key: "notCommon", label: "Not a common weak password", met: checks.notCommon },
+  ];
+
+  return (
+    <div className="mt-2 p-3 bg-cream-50 rounded-xl border border-cream-200 animate-fade-up">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1 h-1.5 bg-cream-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-300 ${
+              passed <= 2 ? "bg-red-400" : passed <= 4 ? "bg-yellow-400" : "bg-olive-500"
+            }`}
+            style={{ width: `${(passed / total) * 100}%` }}
+          />
+        </div>
+        <span className="text-xs font-semibold text-brown-500">
+          {passed <= 2 ? "Weak" : passed <= 4 ? "Fair" : "Strong"}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-1">
+        {requirements.map((req) => (
+          <div key={req.key} className="flex items-center gap-1.5">
+            {req.met ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5a7a4a" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#b89672" strokeWidth="2"><circle cx="12" cy="12" r="9" /></svg>
+            )}
+            <span className={`text-xs ${req.met ? "text-olive-600 font-medium" : "text-brown-400"}`}>
+              {req.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ─── Login Page ───────────────────────────────────────────────────────────────
 
@@ -145,6 +216,7 @@ export function Register() {
   const { showToast, ToastComponent } = useToast();
   const [form, setForm] = useState({ username: "", name: "", email: "", password: "" });
   const [showPw, setShowPw] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -158,7 +230,15 @@ export function Register() {
     else if (form.username.length < 3) e.username = "At least 3 characters";
     if (!form.name.trim()) e.name = "Full name is required";
     if (!form.email.includes("@")) e.email = "Enter a valid email";
-    if (form.password.length < 6) e.password = "At least 6 characters";
+    // Use full password strength validation
+    const checks = checkPasswordStrength(form.password);
+    if (!checks.minLength) e.password = "At least 8 characters";
+    else if (!checks.hasUppercase) e.password = "Need an uppercase letter";
+    else if (!checks.hasLowercase) e.password = "Need a lowercase letter";
+    else if (!checks.hasNumber) e.password = "Need a number";
+    else if (!checks.hasSpecial) e.password = "Need a special character (!@#$%)";
+    else if (!checks.notCommon) e.password = "Password is too common or weak";
+    if (form.password !== confirmPassword) e.confirmPassword = "Passwords do not match";
     return e;
   }
 

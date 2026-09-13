@@ -717,6 +717,13 @@ export const api = {
       }
       return request<{ success: boolean; match: Match }>(`/api/matches/${id}`, {}, token);
     },
+    search: async (query: string, token: string) => {
+      return request<{ success: boolean; query: string; posts: Post[]; count: number; aiAvailable: boolean; message?: string }>(
+        "/api/ai/search",
+        { method: "POST", body: JSON.stringify({ query }) },
+        token
+      );
+    },
   },
 
   admin: {

@@ -7,6 +7,20 @@ const generateToken = (username, role) => {
     });
 };
 
+// Strong password validation
+const WEAK_PASSWORDS = ["password", "12345678", "qwerty", "password123", "123456789", "qwerty123", "abc12345", "password1", "iloveyou", "admin123"];
+
+function validatePassword(password) {
+    const errors = [];
+    if (password.length < 8) errors.push("Password must be at least 8 characters long");
+    if (!/[A-Z]/.test(password)) errors.push("Password must contain at least one uppercase letter");
+    if (!/[a-z]/.test(password)) errors.push("Password must contain at least one lowercase letter");
+    if (!/[0-9]/.test(password)) errors.push("Password must contain at least one number");
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) errors.push("Password must contain at least one special character (!@#$%^&*)");
+    if (WEAK_PASSWORDS.includes(password.toLowerCase())) errors.push("Password is too common or weak");
+    return errors;
+}
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -18,6 +32,16 @@ export const register = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Please provide username, name, email, and password"
+            });
+        }
+
+        // Validate password strength
+        const passwordErrors = validatePassword(password);
+        if (passwordErrors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Password does not meet security requirements",
+                passwordErrors
             });
         }
 

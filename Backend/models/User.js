@@ -1,6 +1,37 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
+// Weak passwords that should be rejected
+const WEAK_PASSWORDS = ["password", "12345678", "qwerty", "password123", "123456789", "qwerty123", "abc12345", "password1"];
+
+function validatePasswordStrength(password) {
+    if (!password || typeof password !== "string") {
+        return "Password is required";
+    }
+    if (password.length < 8) {
+        return "Password must be at least 8 characters long";
+    }
+    if (!/[A-Z]/.test(password)) {
+        return "Password must contain at least one uppercase letter";
+    }
+    if (!/[a-z]/.test(password)) {
+        return "Password must contain at least one lowercase letter";
+    }
+    if (!/[0-9]/.test(password)) {
+        return "Password must contain at least one number";
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        return "Password must contain at least one special character (!@#$%^&*)";
+    }
+    const lower = password.toLowerCase();
+    for (const weak of WEAK_PASSWORDS) {
+        if (lower === weak || lower.includes(weak)) {
+            return "Password is too common or weak. Please choose a stronger password.";
+        }
+    }
+    return null; // valid
+}
+
 const userSchema = new mongoose.Schema(
     {
         username: {
@@ -26,7 +57,7 @@ const userSchema = new mongoose.Schema(
         password: {
             type: String,
             required: [true, "Password is required"],
-            minlength: [6, "Password must be at least 6 characters"]
+            minlength: [8, "Password must be at least 8 characters"]
         },
         role: {
             type: String,
@@ -53,6 +84,10 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
+    const validationError = validatePasswordStrength(this.password);
+    if (validationError) {
+        throw new Error(validationError);
+    }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });
@@ -60,6 +95,8 @@ userSchema.pre("save", async function () {
 userSchema.methods.comparePassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
+
+userSchema.statics.validatePasswordStrength = validatePasswordStrength;
 
 const User = mongoose.model("User", userSchema);
 
