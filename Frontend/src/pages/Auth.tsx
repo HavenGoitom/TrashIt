@@ -357,16 +357,33 @@ export function Register() {
               error={errors.confirmPassword}
               placeholder="Re-enter your password"
               autoComplete="new-password"
+              hint="Must match your password"
               leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
+              rightIcon={
+                <button type="button" onClick={() => setShowPw(!showPw)} className="hover:text-brown-600">
+                  {showPw
+                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                  }
+                </button>
+              }
             />
 
-            <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full rounded-xl mt-2">
-              Create my account
-            </Button>
+            <div className="mt-8">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-cream-200" />
+                <span className="text-xs text-brown-300 font-medium uppercase tracking-wide">Create account</span>
+                <div className="flex-1 h-px bg-cream-200" />
+              </div>
 
-            <p className="text-xs text-brown-400 text-center">
-              By creating an account you agree to our community guidelines. TrashIt is free to use.
-            </p>
+              <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full rounded-xl mt-4">
+                Create my account
+              </Button>
+
+              <p className="text-xs text-brown-400 text-center mt-3">
+                By creating an account you agree to our community guidelines. TrashIt is free to use.
+              </p>
+            </div>
           </form>
 
           <div className="mt-6 flex items-center gap-3">
