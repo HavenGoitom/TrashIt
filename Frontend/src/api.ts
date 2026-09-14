@@ -20,10 +20,76 @@ function authHeader(token: string | null): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// Maps HTTP status codes to user-friendly messages. Raw backend details stay in
+// the console for developers.
+function friendlyError(status: number, backendMessage?: string): string {
+  switch (status) {
+    case 400: return backendMessage || "Some of the information you entered is not valid.";
+    case 401: return backendMessage || "Your session has expired. Please sign in again.";
+    case 403: return backendMessage || "You do not have permission to do that.";
+    case 404: return backendMessage || "We couldn't find what you were looking for.";
+    case 409: return backendMessage || "That already exists.";
+    case 429: return backendMessage || "Too many requests. Please slow down and try again shortly.";
+    case 500: return backendMessage || "Something went wrong on our end. Please try again.";
+    case 502: return backendMessage || "A service we depend on is temporarily unavailable.";
+    default: return backendMessage || "Request failed. Please try again.";
+  }
+}
+
+// ─── Automatic access-token refresh ───────────────────────────────────────────
+// The refresh token lives in an HttpOnly cookie and is never readable from JS.
+// When an authenticated request returns 401 we silently exchange that cookie for
+// a new access token and replay the request, so the user stays signed in.
+
+// Auth endpoints that must surface their own 401 (bad credentials, expired
+// refresh token) instead of triggering a silent refresh + replay.
+const NO_REFRESH_PATHS = [
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/refresh",
+  "/api/auth/logout",
+];
+
+let refreshPromise: Promise<string | null> | null = null;
+
+async function performRefresh(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) return null;
+
+      const data = await res.json();
+      if (!data?.token) return null;
+
+      // Let the auth context adopt the new token + user.
+      window.dispatchEvent(
+        new CustomEvent("trashit:token-refreshed", { detail: { token: data.token, user: data.user } })
+      );
+      return data.token as string;
+    } catch (err) {
+      console.warn("[TrashIt API] Session refresh failed:", err);
+      return null;
+    }
+  })();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
-  token?: string | null
+  token?: string | null,
+  _isRetry = false
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -35,25 +101,39 @@ async function request<T>(
     res = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers,
+      // Required so the HttpOnly refresh cookie is stored and sent.
+      credentials: "include",
     });
   } catch (networkErr) {
     // Network failure: server unreachable, DNS error, CORS blocked, etc.
     console.error(`[TrashIt API] Network error reaching ${BASE_URL}${path}:`, networkErr);
     throw new Error(`Cannot reach the server. Please check your connection and try again.`);
   }
+
+  // Access token expired (or invalid) on an authenticated call — refresh once
+  // and replay the original request. Only attempted when a token was supplied,
+  // so login/register 401s still surface as real credential errors.
+  if (res.status === 401 && token && !_isRetry && !NO_REFRESH_PATHS.some((p) => path.startsWith(p))) {
+    const newToken = await performRefresh();
+    if (newToken) {
+      return request<T>(path, options, newToken, true);
+    }
+  }
+
   let data: any;
   try {
     data = await res.json();
   } catch {
     // Non-JSON response (server error page, empty body, etc.)
-    throw new Error(res.ok ? "Unexpected server response" : `Request failed (${res.status})`);
+    throw new Error(res.ok ? "Unexpected server response" : friendlyError(res.status));
   }
   if (!res.ok) {
-      if (res.status === 401) {
-        window.dispatchEvent(new CustomEvent('trashit:unauthorized'));
-      }
-      throw new Error(data.message || 'Request failed');
+    console.error(`[TrashIt API] ${res.status} ${path}:`, data?.message || data);
+    if (res.status === 401) {
+      window.dispatchEvent(new CustomEvent('trashit:unauthorized'));
     }
+    throw new Error(friendlyError(res.status, data?.message));
+  }
   return data;
 }
 
@@ -538,6 +618,40 @@ export const api = {
       }
       return request<{ success: boolean; user: User }>("/api/auth/me", {}, token);
     },
+    // Revokes the refresh token server-side and clears the HttpOnly cookie.
+    logout: async () => {
+      if (USE_MOCK) {
+        await delay(200);
+        return { success: true };
+      }
+      try {
+        return await request<{ success: boolean }>("/api/auth/logout", { method: "POST" });
+      } catch {
+        // A failed logout must never block the user from signing out locally.
+        return { success: true };
+      }
+    },
+    // Exchanges the HttpOnly refresh cookie for a fresh access token. Used to
+    // restore a session on load when no usable access token is in storage.
+    refresh: async () => {
+      if (USE_MOCK) {
+        await delay(200);
+        return { success: true, token: "mock_token_" + MOCK_USERS[0]._id, user: MOCK_USERS[0] };
+      }
+      const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        throw new Error(friendlyError(res.status));
+      }
+      const data = await res.json();
+      if (!data?.token || !data?.user) {
+        throw new Error("Your session could not be restored. Please sign in again.");
+      }
+      return data as { success: boolean; token: string; user: User };
+    },
   },
 
   posts: {
@@ -592,6 +706,13 @@ export const api = {
         return { success: true, message: "Post deleted successfully" };
       }
       return request<{ success: boolean }>(`/api/posts/${id}`, { method: "DELETE" }, token);
+    },
+    getMyPosts: async (token: string) => {
+      if (USE_MOCK) {
+        await delay(400);
+        return { success: true, posts: MOCK_POSTS.filter((p) => p.user?._id === "u_current") };
+      }
+      return request<{ success: boolean; posts: Post[] }>("/api/posts/my", {}, token);
     },
   },
 

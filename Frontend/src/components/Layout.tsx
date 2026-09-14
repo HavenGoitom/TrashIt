@@ -90,12 +90,12 @@ export function Header({ notifCount = 0 }: { notifCount?: number }) {
 
         {/* Desktop Nav */}
         {isLoggedIn && (
-          <nav className="hidden md:flex items-center gap-1 ml-4">
+          <nav className="hidden lg:flex items-center gap-1 ml-4 min-w-0 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: "none" }}>
             {NAV_LINKS.map((link) => (
               <button
                 key={link.page}
                 onClick={() => navigate(link.page)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                className={`flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   page === link.page
                     ? "bg-orange-500/10 text-orange-500"
                     : "text-brown-600 hover:bg-cream-100 hover:text-brown-800"
@@ -113,7 +113,7 @@ export function Header({ notifCount = 0 }: { notifCount?: number }) {
             {isAdmin && (
               <button
                 onClick={() => navigate("admin")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                className={`flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   page === "admin" ? "bg-orange-500/10 text-orange-500" : "text-brown-600 hover:bg-cream-100"
                 }`}
               >
@@ -245,7 +245,7 @@ export function BottomNav({ notifCount = 0 }: { notifCount?: number }) {
   const { navigate, page } = useRouter();
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-warm-white/95 backdrop-blur-sm border-t border-cream-200 safe-bottom">
+    <nav className="fixed bottom-0 inset-x-0 z-40 lg:hidden bg-warm-white/95 backdrop-blur-sm border-t border-cream-200 safe-bottom">
       <div className="flex items-center justify-around h-16 px-2">
         {MOBILE_NAV.map((item) => {
           const active = page === item.page;
@@ -297,7 +297,7 @@ export function Layout({ children, notifCount = 0, showBottomNav = true, maxWidt
         {children}
       </main>
       {isLoggedIn && showBottomNav && <BottomNav notifCount={notifCount} />}
-      {isLoggedIn && <div className="h-16 md:hidden" />}
+      {isLoggedIn && <div className="h-16 lg:hidden" />}
     </div>
   );
 }

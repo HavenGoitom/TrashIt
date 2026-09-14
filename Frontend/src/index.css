@@ -45,6 +45,8 @@ body {
   font-family: var(--font-sans);
   background-color: #faf8f3;
   color: #2d1f14;
+  /* Prevent long titles, usernames or messages from causing horizontal scroll. */
+  overflow-x: hidden;
 }
 
 .font-display {

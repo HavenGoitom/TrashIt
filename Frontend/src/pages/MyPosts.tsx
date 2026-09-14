@@ -93,7 +93,7 @@ export default function MyPosts() {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    api.posts.getAll().then((res) => {
+    api.posts.getMyPosts(token).then((res) => {
       setPosts(res.posts);
     }).catch(() => setPosts([])).finally(() => setLoading(false));
   }, [token]);

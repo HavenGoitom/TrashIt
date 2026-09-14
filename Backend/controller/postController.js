@@ -384,3 +384,25 @@ export const deletePost = async (req, res) => {
         });
     }
 };
+
+// @desc    Get current user's own posts
+// @route   GET /api/posts/my
+// @access  Private
+export const getMyPosts = async (req, res) => {
+    try {
+        const posts = await Post.find({ user: req.user._id })
+            .sort({ createdAt: -1 })
+            .populate("user", "username name email");
+
+        return res.status(200).json({
+            success: true,
+            posts
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching your posts",
+            error: error.message
+        });
+    }
+};

@@ -80,7 +80,7 @@ export default function Discover() {
       {user && <GreetingBanner name={user.name} />}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-4 sm:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         <QuickAction
           highlight
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>}
@@ -124,11 +124,11 @@ export default function Discover() {
             </button>
           </div>
           {featuredLoading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => <PostCardSkeleton key={i} />)}
             </div>
           ) : featuredPosts.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {featuredPosts.map((post) => (
                 <PostCard key={post._id} post={post} />
               ))}

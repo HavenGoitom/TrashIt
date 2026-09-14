@@ -15,6 +15,7 @@ import profileRouter from "./routes/profileRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import aiRouter from "./routes/aiRoute.js";
 import matchRouter from "./routes/matchRoute.js";
+import { cookieParser } from "./middleware/cookieMiddleware.js";
 import { initSocket } from "./socket/socketHandler.js";
 
 dotenv.config();
@@ -22,11 +23,26 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-// CORS
-app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "PATCH", "DELETE"] }));
+// CORS — credentials must be allowed so the HttpOnly refresh cookie is sent.
+// Set CLIENT_URL (comma separated) in production; otherwise reflect the origin.
+const allowedOrigins = (process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use(
+    cors({
+        origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    })
+);
 
 // Body parsing
 app.use(express.json({ limit: "10mb" }));
+
+// Cookie parsing (used for the HttpOnly refresh token)
+app.use(cookieParser);
 
 // Simple rate limiting for auth routes
 const rateLimit = new Map();
@@ -60,8 +76,12 @@ const rateLimiter = (req, res, next) => {
     next();
 };
 
-// Apply rate limiting to auth routes
-app.use("/api/auth", rateLimiter);
+// Rate limit only the credential-submitting endpoints. /api/auth/me and
+// /api/auth/refresh are called routinely (session restore on every page load
+// and silent token refresh) and must not be throttled, otherwise normal users
+// get locked out with 429.
+app.use("/api/auth/login", rateLimiter);
+app.use("/api/auth/register", rateLimiter);
 
 // Connect to MongoDB
 mongoose

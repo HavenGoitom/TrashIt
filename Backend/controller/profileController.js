@@ -1,6 +1,12 @@
 import User from "../models/User.js";
 import Post from "../models/Post.js";
+import RefreshToken from "../models/RefreshToken.js";
 import bcrypt from "bcrypt";
+
+// Keep these in sync with the values used in authController.js so the refresh
+// cookie cleared here is the exact one that was set at login.
+const REFRESH_COOKIE_NAME = "trashit_refresh";
+const REFRESH_COOKIE_PATH = "/api/auth";
 
 // @desc    Update user profile
 // @route   PUT /api/profile
@@ -9,11 +15,62 @@ export const updateProfile = async (req, res) => {
     try {
         const { name, bio, location } = req.body;
 
+        if (name === undefined && bio === undefined && location === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide at least one field to update (name, bio, or location)"
+            });
+        }
+
         const user = await User.findById(req.user._id);
 
-        if (name) user.name = name;
-        if (bio !== undefined) user.bio = bio;
-        if (location !== undefined) user.location = location;
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Only touch the fields that were actually sent, so values the user did
+        // not change are preserved.
+        if (name !== undefined) {
+            const trimmedName = String(name).trim();
+            if (!trimmedName) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Full name cannot be empty"
+                });
+            }
+            if (trimmedName.length > 80) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Full name must be 80 characters or less"
+                });
+            }
+            user.name = trimmedName;
+        }
+
+        if (bio !== undefined) {
+            const trimmedBio = String(bio).trim();
+            if (trimmedBio.length > 500) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Bio must be 500 characters or less"
+                });
+            }
+            user.bio = trimmedBio;
+        }
+
+        if (location !== undefined) {
+            const trimmedLocation = String(location).trim();
+            if (trimmedLocation.length > 120) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Location must be 120 characters or less"
+                });
+            }
+            user.location = trimmedLocation;
+        }
 
         await user.save();
 
@@ -27,7 +84,9 @@ export const updateProfile = async (req, res) => {
                 email: user.email,
                 bio: user.bio,
                 location: user.location,
-                role: user.role
+                role: user.role,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
             }
         });
     } catch (error) {
@@ -91,7 +150,8 @@ export const changePassword = async (req, res) => {
 // @access  Private
 export const deleteAccount = async (req, res) => {
     try {
-        const { password } = req.body;
+        // Express 5 leaves req.body undefined when no JSON body was sent.
+        const { password } = req.body || {};
 
         if (!password) {
             return res.status(400).json({
@@ -113,8 +173,20 @@ export const deleteAccount = async (req, res) => {
         // Delete user's posts
         await Post.deleteMany({ user: req.user._id });
 
+        // Revoke every refresh token for this user so no session can be
+        // resurrected after the account is gone.
+        await RefreshToken.deleteMany({ user: req.user._id });
+
         // Delete user
         await User.findByIdAndDelete(req.user._id);
+
+        // Clear the refresh cookie exactly like logout does.
+        res.clearCookie(REFRESH_COOKIE_NAME, {
+            httpOnly: true,
+            secure: process.env.COOKIE_SECURE === "true" || process.env.NODE_ENV === "production",
+            sameSite: process.env.COOKIE_SAME_SITE || "lax",
+            path: REFRESH_COOKIE_PATH
+        });
 
         return res.status(200).json({
             success: true,

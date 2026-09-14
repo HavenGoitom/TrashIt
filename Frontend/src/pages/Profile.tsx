@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import { useAuth } from "../context";
 import { useRouter } from "../context";
 import { Button, Input, Textarea, Modal, useToast, Avatar } from "../components/ui";
 import { api } from "../api";
+import type { User } from "../types";
 
 export default function Profile() {
   const { user, token, updateUser, logout } = useAuth();
@@ -24,6 +25,17 @@ export default function Profile() {
   const [pwErrors, setPwErrors] = useState<Record<string, string>>({});
   const [deletePassword, setDeletePassword] = useState("");
 
+  // Keep the edit form in sync with the authenticated user's real data.
+  // Skipped while editing so in-progress input is never overwritten.
+  useEffect(() => {
+    if (editMode) return;
+    setProfileForm({
+      name: user?.name || "",
+      bio: user?.bio || "",
+      location: user?.location || "",
+    });
+  }, [user?.name, user?.bio, user?.location, editMode]);
+
   function setProfileField(k: keyof typeof profileForm) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setProfileForm(f => ({ ...f, [k]: e.target.value }));
@@ -39,7 +51,9 @@ export default function Profile() {
     setLoading(true);
     try {
       const res = await api.profile.update(profileForm, token);
-      updateUser(res.user);
+      // Merge the response into the existing user so fields the backend does
+      // not return (or that the user did not touch) are preserved.
+      updateUser(user ? { ...user, ...res.user } : (res.user as User));
       setEditMode(false);
       showToast("Profile updated!", "success");
     } catch (e: unknown) {

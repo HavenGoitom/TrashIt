@@ -1,4 +1,5 @@
 import Post from "../models/Post.js";
+import { generateAIText } from "../services/aiService.js";
 
 export const whatCouldIMake = async (req, res) => {
     try {
@@ -31,40 +32,18 @@ Return ONLY a valid JSON array (no markdown, no code fences, no extra text) with
 Example format:
 [{"title":"...","description":"...","steps":["...","..."],"difficulty":"easy"}, ...]`;
 
-        const response = await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-goog-api-key": process.env.GEMINI_API_KEY
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [{ text: prompt }]
-                        }
-                    ]
-                })
-            }
-        );
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+        // Gemini is tried first; OpenRouter and Grok are transparent fallbacks.
+        let text;
+        try {
+            const aiResult = await generateAIText(prompt);
+            text = aiResult.text;
+        } catch (aiError) {
+            // Developer detail stays in the server log; the client gets a
+            // friendly, non-technical message.
+            console.error("[TrashIt AI] All providers failed:", aiError.details || aiError.message);
             return res.status(502).json({
                 success: false,
-                message: "AI service temporarily unavailable",
-                error: errorData.error?.message || `Gemini API returned ${response.status}`
-            });
-        }
-
-        const data = await response.json();
-
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) {
-            return res.status(502).json({
-                success: false,
-                message: "AI returned an empty response"
+                message: "AI service temporarily unavailable"
             });
         }
 
@@ -142,28 +121,9 @@ Extract 3-5 relevant search keywords or short phrases that would help find match
 Return ONLY a valid JSON array of strings (no markdown, no code fences, no extra text).
 Example: ["plastic bottles", "PET containers", "recyclable plastic"]`;
 
-            const response = await fetch(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-goog-api-key": process.env.GEMINI_API_KEY
-                    },
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [{ text: prompt }]
-                            }
-                        ]
-                    })
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
+            const aiResult = await generateAIText(prompt);
+            const text = aiResult.text;
+            if (text) {
                     let cleaned = text.trim();
                     if (cleaned.startsWith("```json")) {
                         cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
@@ -173,9 +133,6 @@ Example: ["plastic bottles", "PET containers", "recyclable plastic"]`;
                     aiKeywords = JSON.parse(cleaned);
                     if (!Array.isArray(aiKeywords)) aiKeywords = [];
                 }
-            } else {
-                aiAvailable = false;
-            }
         } catch (aiError) {
             aiAvailable = false;
         }

@@ -22,7 +22,6 @@ function checkPasswordStrength(password: string): PasswordChecks {
     hasLowercase: /[a-z]/.test(password),
     hasNumber: /[0-9]/.test(password),
     hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
-    notCommon: true,
   };
 }
 
@@ -86,7 +85,7 @@ export function Login() {
   const { navigate } = useRouter();
   const { login } = useAuth();
   const { showToast, ToastComponent } = useToast();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -94,7 +93,7 @@ export function Login() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!email) e.email = "Email is required";
+    if (!identifier) e.identifier = "Email or username is required";
     if (!password) e.password = "Password is required";
     return e;
   }
@@ -106,7 +105,7 @@ export function Login() {
     setErrors({});
     setLoading(true);
     try {
-      const res = await api.auth.login({ email, password });
+      const res = await api.auth.login({ email: identifier, password });
       login(res.token, res.user);
       navigate("discover");
     } catch (err: unknown) {
@@ -154,13 +153,13 @@ export function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Email address"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={errors.email}
-              placeholder="you@example.com"
-              autoComplete="email"
+              label="Email or username"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              error={errors.identifier}
+              placeholder="you@example.com or your username"
+              autoComplete="username"
               leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>}
             />
             <Input
@@ -300,25 +299,25 @@ export function Register() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Username"
-                value={form.username}
-                onChange={set("username")}
-                error={errors.username}
-                placeholder="johndoe"
-                autoComplete="username"
-                leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
-              />
-              <Input
-                label="Full name"
-                value={form.name}
-                onChange={set("name")}
-                error={errors.name}
-                placeholder="John Doe"
-                autoComplete="name"
-              />
-            </div>
+            <Input
+              label="Full name"
+              value={form.name}
+              onChange={set("name")}
+              error={errors.name}
+              placeholder="John Doe"
+              autoComplete="name"
+              leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+            />
+            <Input
+              label="Username"
+              value={form.username}
+              onChange={set("username")}
+              error={errors.username}
+              placeholder="johndoe"
+              autoComplete="username"
+              hint="You can sign in with either your email or username"
+              leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" /></svg>}
+            />
             <Input
               label="Email address"
               type="email"

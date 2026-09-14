@@ -21,7 +21,7 @@ function MiniPostCard({ post }: { post: Post }) {
   const { navigate } = useRouter();
   return (
     <div
-      className="bg-warm-white rounded-2xl overflow-hidden border border-cream-200 flex-shrink-0 w-64 cursor-pointer hover:border-orange-200 transition-colors"
+      className="bg-warm-white rounded-2xl overflow-hidden border border-cream-200 w-full sm:w-64 sm:flex-shrink-0 cursor-pointer hover:border-orange-200 transition-colors"
       onClick={() => navigate("post-detail", { postId: post._id })}
     >
       <div className="h-36 relative overflow-hidden bg-cream-100">
@@ -31,8 +31,22 @@ function MiniPostCard({ post }: { post: Post }) {
         </div>
       </div>
       <div className="p-3">
-        <p className="font-semibold text-brown-800 text-sm line-clamp-1">{post.title}</p>
+        <p className="font-semibold text-brown-800 text-sm line-clamp-1 break-words">{post.title}</p>
         <PriceDisplay price={post.price} className="text-sm font-bold text-orange-500 mt-1" />
+      </div>
+    </div>
+  );
+}
+
+// Placeholder shown while the preview posts are loading so the section never
+// collapses to an empty gap.
+function MiniPostSkeleton() {
+  return (
+    <div className="bg-warm-white rounded-2xl overflow-hidden border border-cream-200 w-full sm:w-64 sm:flex-shrink-0">
+      <div className="skeleton h-36 w-full" />
+      <div className="p-3 space-y-2">
+        <div className="skeleton h-4 w-4/5 rounded-lg" />
+        <div className="skeleton h-4 w-16 rounded-lg" />
       </div>
     </div>
   );
@@ -257,11 +271,19 @@ export default function Landing() {
             </button>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
-            {previewPosts.map((post) => (
-              <MiniPostCard key={post._id} post={post} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 sm:flex sm:gap-4 sm:overflow-x-auto sm:pb-4" style={{ scrollbarWidth: "none" }}>
+              {Array.from({ length: 4 }).map((_, i) => <MiniPostSkeleton key={i} />)}
+            </div>
+          ) : previewPosts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:flex sm:gap-4 sm:overflow-x-auto sm:pb-4" style={{ scrollbarWidth: "none" }}>
+              {previewPosts.map((post) => (
+                <MiniPostCard key={post._id} post={post} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-brown-300 text-sm">No posts yet — be the first to give something a second life.</p>
+          )}
         </div>
       </section>
 

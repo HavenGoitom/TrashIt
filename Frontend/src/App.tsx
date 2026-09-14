@@ -24,27 +24,24 @@ import Admin from "./pages/Admin";
 
 function AppRouter() {
   const { page } = useRouter();
-  const { isLoggedIn, token, logout } = useAuth();
+  const { isLoggedIn, token, logout, authRestoring } = useAuth();
   const [notifCount, setNotifCount] = useState(0);
-  const [authRestored, setAuthRestored] = useState(false);
 
-  // Restore auth on mount — validate stored token with backend
+  // Validate the stored session once on mount. If the access token has expired
+  // the API client silently refreshes it using the HttpOnly refresh cookie; if
+  // that fails the session is cleared and the user is asked to sign in again.
   useEffect(() => {
     const storedToken = localStorage.getItem("trashit_token");
-    if (storedToken) {
-      // Token exists in storage — validate it with the backend
-      api.auth.me(storedToken).then(() => {
-        // Token is valid — user already restored from localStorage in context
-      }).catch(() => {
-        // Token invalid or expired — clear storage and log out
+    if (!storedToken) return;
+
+    api.auth.me(storedToken).catch(() => {
+      // Only sign out if the session we validated is still the active one, so a
+      // user who just signed in is never kicked back out.
+      if (localStorage.getItem("trashit_token") === storedToken) {
         logout();
-      }).finally(() => {
-        setAuthRestored(true);
-      });
-    } else {
-      setAuthRestored(true);
-    }
-  }, []);
+      }
+    });
+  }, [logout]);
 
   // Initialize socket and listen for real-time notifications
   useEffect(() => {
@@ -71,7 +68,7 @@ function AppRouter() {
   }, [isLoggedIn, token]);
 
   // Show nothing while restoring auth
-  if (!authRestored) {
+  if (authRestoring) {
     return (
       <div className="min-h-full flex items-center justify-center bg-cream-50">
         <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />

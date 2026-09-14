@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import type { User, Page, PageParams } from "./types";
-import { disconnectSocket } from "./api";
+import { disconnectSocket, api } from "./api";
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
@@ -69,6 +69,7 @@ interface AuthContextValue {
   updateUser: (user: User) => void;
   isAdmin: boolean;
   isLoggedIn: boolean;
+  authRestoring: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -76,6 +77,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(getStoredUser);
   const [token, setToken] = useState<string | null>(getStoredToken);
+  const [authRestoring, setAuthRestoring] = useState(true);
 
   const login = useCallback((t: string, u: User) => {
     setToken(t);
@@ -94,6 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
     } catch { /* storage unavailable */ }
+    // Revoke the refresh token server-side and clear the HttpOnly cookie so the
+    // session cannot be silently restored later.
+    void api.auth.logout();
   }, []);
 
   const updateUser = useCallback((u: User) => {
@@ -108,6 +113,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("trashit:unauthorized", handleUnauthorized);
   }, [logout]);
 
+  // Adopt an access token that the API client silently obtained by exchanging
+  // the HttpOnly refresh cookie. This keeps the user signed in past the 1-day
+  // access-token lifetime without ever showing the login page.
+  useEffect(() => {
+    const handleRefreshed = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { token?: string; user?: User } | undefined;
+      if (detail?.token && detail?.user) {
+        login(detail.token, detail.user);
+      }
+    };
+    window.addEventListener("trashit:token-refreshed", handleRefreshed);
+    return () => window.removeEventListener("trashit:token-refreshed", handleRefreshed);
+  }, [login]);
+
+  // Restore the session on load. A stored token is validated by the app (the
+  // API client refreshes it silently on 401); with no stored token we fall back
+  // to the refresh cookie so the session survives a cleared localStorage.
+  useEffect(() => {
+    let cancelled = false;
+
+    if (getStoredToken() && getStoredUser()) {
+      setAuthRestoring(false);
+      return;
+    }
+
+    api.auth.refresh()
+      .then((res) => {
+        if (!cancelled) login(res.token, res.user);
+      })
+      .catch(() => {
+        // No usable refresh token — the user simply stays signed out.
+      })
+      .finally(() => {
+        if (!cancelled) setAuthRestoring(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [login]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -118,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateUser,
         isAdmin: user?.role === "admin",
         isLoggedIn: !!user,
+        authRestoring,
       }}
     >
       {children}
