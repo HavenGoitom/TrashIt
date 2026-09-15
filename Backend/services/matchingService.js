@@ -2,160 +2,118 @@ import Post from "../models/Post.js";
 import Match from "../models/Match.js";
 import Notification from "../models/Notification.js";
 import { getIO } from "../socket/socketHandler.js";
-import { generateAIText } from "./aiService.js";
 
-// Extract item info from a post using the AI provider fallback chain
-// (Gemini → OpenRouter → Grok). Returns null if all providers fail.
-async function extractItemInfo(post) {
-    const prompt = `Given this marketplace post, extract the item name and category.
-Title: "${post.title}"
-Description: "${post.description || ""}"
-Type: ${post.type}
-Price: ${post.price.fixed ? post.price.fixed + " birr" : post.price.min + "-" + post.price.max + " birr"}
-Quantity: ${post.quantity.fixed ? post.quantity.fixed : post.quantity.min + "-" + post.quantity.max}
+// Normalize a post title for matching:
+// lowercase, trim, collapse spaces, drop common filler words and suffixes
+// ("s" plural marker, "a"/"an"/"the", "for sale", "wanted", "need", etc.).
+export function normalizeTitle(title) {
+    if (!title) return [];
 
-Return ONLY a JSON object (no markdown, no code fences) with:
-- "item": the main item name (e.g., "plastic chairs", "wine bottles")
-- "category": a broad category (e.g., "furniture", "plastic", "glass", "textile", "metal", "electronics", "wood", "other")
+    let t = String(title)
+        .toLowerCase()
+        .trim()
+                .replace(/\b(for\s+)?sale\b/g, "")
+        .replace(/\bwanted\b|\blooking\s+for\b|\bneed\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
-Example: {"item": "plastic chairs", "category": "furniture"}`;
-
-    try {
-        const text = (await generateAIText(prompt)).text.trim();
-        if (!text) return null;
-
-        // Clean markdown fences
-        let cleaned = text;
-        if (cleaned.startsWith("```json")) {
-            cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-        } else if (cleaned.startsWith("```")) {
-            cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
-        }
-
-        try {
-            return JSON.parse(cleaned);
-        } catch {
-            // Some providers wrap JSON in prose — try to pull the object out
-            const m = cleaned.match(/\{[\s\S]*\}/);
-            if (m) {
-                try {
-                    return JSON.parse(m[0]);
-                } catch {
-                    return null;
-                }
+    // Tokenize and normalize each word so "bottles" and "bottle" match.
+    const tokens = t
+        .split(/\s+/)
+        .map((w) => w.replace(/[^a-z0-9]/g, ""))
+        .filter((w) => w && w.length >= 2)
+        .map((w) => {
+            // Collapse simple plurals: bottles -> bottle, boxes -> boxx
+            if (w.length > 3 && w.endsWith("s") && !w.endsWith("ss")) {
+                return w.slice(0, -1);
             }
-            return null;
-        }
-    } catch {
-        return null;
-    }
+            return w;
+        });
+
+    return tokens;
 }
 
-// Check if two items are similar (simple string matching + Gemini fallback)
-function areItemsSimilar(item1, item2) {
-    if (!item1 || !item2) return false;
+// Check whether two normalized titles are similar using word-set logic.
+// Returns true if one title's word set overlaps the other's by at least
+// 50% of the smaller set. This makes "wine bottle" vs "wine" match because
+// the single word "wine" trivially overlaps 100% of the smaller set.
+export function areTitlesSimilar(titleA, titleB) {
+    const wordsA = normalizeTitle(titleA);
+    const wordsB = normalizeTitle(titleB);
 
-    const a = item1.toLowerCase().trim();
-    const b = item2.toLowerCase().trim();
+    if (wordsA.length === 0 || wordsB.length === 0) return false;
 
-    // Direct match
-    if (a === b) return true;
+    // Exact set match
+    if (wordsA.length === wordsB.length) {
+        const setA = new Set(wordsA);
+        const allMatch = wordsB.every((w) => setA.has(w));
+        if (allMatch) return true;
+    }
 
-    // One contains the other
-    if (a.includes(b) || b.includes(a)) return true;
-
-    // Word overlap
-    const wordsA = new Set(a.split(/\s+/));
-    const wordsB = new Set(b.split(/\s+/));
+    // One contains all words of the other (>= 50% of smaller set)
+    const small = wordsA.length <= wordsB.length ? wordsA : wordsB;
+    const bigSet = new Set(wordsA.length <= wordsB.length ? wordsB : wordsA);
     let overlap = 0;
-    for (const word of wordsA) {
-        if (wordsB.has(word)) overlap++;
+    for (const w of small) {
+        if (bigSet.has(w)) overlap++;
     }
-    // If more than half of the words match
-    return overlap >= Math.min(wordsA.size, wordsB.size) / 2;
+    return overlap >= small.length / 2;
 }
 
-// Check if prices are compatible
-function arePricesCompatible(buyPost, sellPost) {
-    const buyPrice = buyPost.price.fixed || buyPost.price.max || buyPost.price.min;
-    const sellPrice = sellPost.price.fixed || sellPost.price.min || sellPost.price.max;
-
-    if (!buyPrice || !sellPrice) return false;
-
-    // Buyer's price should be >= seller's price (or within range)
-    if (buyPost.price.fixed && sellPost.price.fixed) {
-        return buyPost.price.fixed >= sellPost.price.fixed;
-    }
-
-    // Check if ranges overlap
-    const buyMin = buyPost.price.min || buyPost.price.fixed;
-    const buyMax = buyPost.price.max || buyPost.price.fixed;
-    const sellMin = sellPost.price.min || sellPost.price.fixed;
-    const sellMax = sellPost.price.max || sellPost.price.fixed;
-
-    return buyMax >= sellMin && buyMin <= sellMax;
-}
-
-// Check if quantities are compatible
-function areQuantitiesCompatible(buyPost, sellPost) {
-    const buyQty = buyPost.quantity.fixed || buyPost.quantity.max || buyPost.quantity.min;
-    const sellQty = sellPost.quantity.fixed || sellPost.quantity.min || sellPost.quantity.max;
-
-    if (!buyQty || !sellQty) return false;
-
-    // Seller should have at least what buyer wants (or close)
-    if (buyPost.quantity.fixed && sellPost.quantity.fixed) {
-        return sellPost.quantity.fixed >= buyPost.quantity.fixed * 0.5; // within 50%
-    }
-
-    // Check if ranges overlap
-    const buyMin = buyPost.quantity.min || buyPost.quantity.fixed;
-    const buyMax = buyPost.quantity.max || buyPost.quantity.fixed;
-    const sellMin = sellPost.quantity.min || sellPost.quantity.fixed;
-    const sellMax = sellPost.quantity.max || sellPost.quantity.fixed;
-
-    return sellMax >= buyMin * 0.5 && sellMin <= buyMax * 1.5;
-}
+// Prices and quantities are intentionally NOT used for matching.
+// Matching is based solely on the post title/name and the Buy/Sell type.
 
 // Main matching function - call this after creating a post
 export async function findMatchesForPost(newPost) {
     try {
-        // Extract item info from the new post
-        const newInfo = await extractItemInfo(newPost);
-        if (!newInfo) return [];
+        const matches = [];
+        const newPostId = newPost._id;
+        // user may be populated (object) or a plain ObjectId
+        const newPostUser = newPost.user._id || newPost.user;
 
-        // Find opposite posts (active only, different user)
+        // Matching is bidirectional: when a Sell post is created we look for
+        // compatible Buy posts, and vice-versa. (In practice the system
+        // triggers on either type so both directions are covered.)
         const oppositeType = newPost.type === "buy" ? "sell" : "buy";
+
+        console.log("[MATCHING] findMatchesForPost", {
+            newPostId: newPost._id?.toString(),
+            title: newPost.title,
+            type: newPost.type,
+            lookingFor: oppositeType,
+            userId: newPostUser.toString()
+        });
+
         const oppositePosts = await Post.find({
             type: oppositeType,
             status: "active",
-            user: { $ne: newPost.user }
+            _id: { $ne: newPostId },
+            user: { $ne: newPostUser }
         }).populate("user", "username name");
 
-        const matches = [];
+        console.log("[MATCHING] found", oppositePosts.length, "opposite posts");
 
         for (const oppPost of oppositePosts) {
-            // Extract item info from opposite post
-            const oppInfo = await extractItemInfo(oppPost);
-            if (!oppInfo) continue;
+            // Match on title/name ONLY — no price, quantity, location, or AI.
+            if (!areTitlesSimilar(newPost.title, oppPost.title)) {
+                console.log("[MATCHING] no match:", newPost.title, "vs", oppPost.title);
+                continue;
+            }
+            console.log("[MATCHING] MATCH:", newPost.title, "vs", oppPost.title);
 
-            // Check if items are similar
-            if (!areItemsSimilar(newInfo.item, oppInfo.item)) continue;
-
-            // Check price compatibility
+            // Determine which post is buy vs sell
             const buyPost = newPost.type === "buy" ? newPost : oppPost;
             const sellPost = newPost.type === "sell" ? newPost : oppPost;
-
-            if (!arePricesCompatible(buyPost, sellPost)) continue;
-            if (!areQuantitiesCompatible(buyPost, sellPost)) continue;
 
             // Check if match already exists
             const existingMatch = await Match.findOne({
                 buyPost: buyPost._id,
                 sellPost: sellPost._id
             });
-
-            if (existingMatch) continue;
+            if (existingMatch) {
+                console.log("[MATCHING] match already exists");
+                continue;
+            }
 
             // Create match record
             const match = await Match.create({
@@ -169,9 +127,10 @@ export async function findMatchesForPost(newPost) {
             await notifyMatch(match, buyPost, sellPost);
         }
 
+        console.log("[MATCHING] created", matches.length, "matches");
         return matches;
     } catch (error) {
-        // If matching fails, don't break post creation
+        console.error("[MATCHING] ERROR:", error);
         return [];
     }
 }
@@ -184,7 +143,7 @@ async function notifyMatch(match, buyPost, sellPost) {
         const buyerNotification = await Notification.create({
             recipient: buyPost.user,
             type: "post_response",
-            message: `🔥 Potential Match: We found someone selling what you're looking for.`,
+            message: "🔥 Potential Match: We found someone selling what you're looking for.",
             relatedPost: sellPost._id,
             sender: sellPost.user
         });
@@ -204,7 +163,7 @@ async function notifyMatch(match, buyPost, sellPost) {
         const sellerNotification = await Notification.create({
             recipient: sellPost.user,
             type: "post_response",
-            message: `🔥 Potential Match: Someone is looking for what you're selling.`,
+            message: "🔥 Potential Match: Someone is looking for what you're selling.",
             relatedPost: buyPost._id,
             sender: buyPost.user
         });
