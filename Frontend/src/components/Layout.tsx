@@ -11,7 +11,7 @@ export function Logo({ className = "" }: { className?: string }) {
       src="/favicon.svg"
       alt="TrashIt logo"
       className={className}
-      style={{ height: "100%", width: "auto" }}
+      style={{ height: "2rem", width: "auto" }}
     />
   );
 }
