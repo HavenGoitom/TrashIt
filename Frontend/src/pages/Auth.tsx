@@ -3,6 +3,7 @@ import { useRouter } from "../context";
 import { useAuth } from "../context";
 import { Button, Input, useToast } from "../components/ui";
 import { DoodleRecycle, DoodleStar, DoodleLeaf } from "../components/Doodles";
+import { Logo } from "../components/Layout";
 import { api } from "../api";
 
 // â”€â”€â”€ Password Strength Checker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -139,8 +140,7 @@ export function Login() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <button onClick={() => navigate("landing")} className="flex items-center gap-2 mb-8">
-            <DoodleRecycle size={28} color="#c4622d" />
-            <span className="font-display text-2xl font-semibold text-brown-900">TrashIt</span>
+            <Logo className="h-8 w-auto" />
           </button>
 
           <h1 className="font-display text-3xl font-semibold text-brown-900 mb-1">Sign in</h1>
