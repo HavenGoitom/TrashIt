@@ -7,18 +7,12 @@ import type { Page } from "../types";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Recycling mark */}
-      <g transform="translate(0, 4)">
-        <path d="M14 4L9 13h3l-3 6h12l-3-6h3z" fill="#c4622d" stroke="#c4622d" strokeWidth="0.5" strokeLinejoin="round" opacity="0.9" />
-        <path d="M7 19l-3 5 4 1M21 19l3 5-4 1" stroke="#c4622d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M9 25c1 1 5 2 5 2M19 25c-1 1-5 2-5 2" stroke="#c4622d" strokeWidth="1.5" strokeLinecap="round" />
-      </g>
-      {/* Brand name */}
-      <text x="34" y="26" fontSize="20" fontWeight="700" fill="#1a1009" fontFamily="Fraunces, Georgia, serif" letterSpacing="-0.5">
-        TrashIt
-      </text>
-    </svg>
+    <img
+      src="/favicon.svg"
+      alt="TrashIt logo"
+      className={className}
+      style={{ height: "100%", width: "auto" }}
+    />
   );
 }
 
