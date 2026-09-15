@@ -11,10 +11,14 @@ const REFRESH_COOKIE_NAME = "trashit_refresh";
 // Restrict the cookie to the auth routes — it is only needed there.
 const REFRESH_COOKIE_PATH = "/api/auth";
 
-const generateToken = (username, role) => {
-    return jwt.sign({ username, role }, process.env.JWT_SECRET, {
-        expiresIn: ACCESS_TOKEN_EXPIRES_IN
-    });
+// Identity is taken from the immutable user id. Username/role are included for
+// convenience only — never used for lookups (a username can be changed).
+const generateToken = (user) => {
+    return jwt.sign(
+        { id: user._id.toString(), username: user.username, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+    );
 };
 
 function refreshCookieOptions(expiresAt) {
@@ -53,7 +57,7 @@ function publicUser(user) {
 
 // Issues a fresh access token and rotates the refresh token cookie.
 async function issueSession(user, req, res) {
-    const accessToken = generateToken(user.username, user.role);
+    const accessToken = generateToken(user);
 
     const refreshToken = crypto.randomBytes(64).toString("hex");
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_DAYS * 24 * 60 * 60 * 1000);

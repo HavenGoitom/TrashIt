@@ -18,19 +18,48 @@ interface RouterContextValue {
 
 const RouterContext = createContext<RouterContextValue | null>(null);
 
+// Persist the current page in sessionStorage so refreshing the browser keeps
+// the user on the page they were viewing (auth state is restored separately).
+const PAGE_KEY = "trashit_page";
+const PARAMS_KEY = "trashit_params";
+
+function getInitialHistory(): RouterState[] {
+  try {
+    const storedPage = sessionStorage.getItem(PAGE_KEY) as Page | null;
+    if (storedPage) {
+      const params = JSON.parse(sessionStorage.getItem(PARAMS_KEY) || "{}");
+      return [{ page: storedPage, params }];
+    }
+  } catch { /* storage unavailable */ }
+  return [{ page: "landing", params: {} }];
+}
+
 export function RouterProvider({ children }: { children: ReactNode }) {
-  const [history, setHistory] = useState<RouterState[]>([{ page: "landing", params: {} }]);
+  const [history, setHistory] = useState<RouterState[]>(getInitialHistory);
   const current = history[history.length - 1];
 
-  const navigate = useCallback((page: Page, params: PageParams = {}) => {
-    setHistory((h) => [...h, { page, params }]);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const persist = useCallback((state: RouterState) => {
+    try {
+      sessionStorage.setItem(PAGE_KEY, state.page);
+      sessionStorage.setItem(PARAMS_KEY, JSON.stringify(state.params || {}));
+    } catch { /* storage unavailable */ }
   }, []);
 
-  const back = useCallback(() => {
-    setHistory((h) => (h.length > 1 ? h.slice(0, -1) : h));
+  const navigate = useCallback((page: Page, params: PageParams = {}) => {
+    persist({ page, params });
+    setHistory((h) => [...h, { page, params }]);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [persist]);
+
+  const back = useCallback(() => {
+    setHistory((h) => {
+      if (h.length <= 1) return h;
+      const next = h.slice(0, -1);
+      persist(next[next.length - 1]);
+      return next;
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [persist]);
 
   return (
     <RouterContext.Provider value={{ page: current.page, params: current.params, navigate, back }}>

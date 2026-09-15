@@ -25,7 +25,11 @@ export const initSocket = (httpServer) => {
             }
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const user = await User.findOne({ username: decoded.username }).select("-password");
+            // Identity comes from the immutable user id; fall back to username
+            // for tokens issued before the id was added to the payload.
+            const user = decoded.id
+                ? await User.findById(decoded.id).select("-password")
+                : await User.findOne({ username: decoded.username }).select("-password");
 
             if (!user) {
                 return next(new Error("Authentication error: User not found"));

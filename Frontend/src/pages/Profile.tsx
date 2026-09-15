@@ -17,9 +17,12 @@ export default function Profile() {
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
+    username: user?.username || "",
+    email: user?.email || "",
     bio: user?.bio || "",
     location: user?.location || "",
   });
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [pwErrors, setPwErrors] = useState<Record<string, string>>({});
@@ -31,10 +34,12 @@ export default function Profile() {
     if (editMode) return;
     setProfileForm({
       name: user?.name || "",
+      username: user?.username || "",
+      email: user?.email || "",
       bio: user?.bio || "",
       location: user?.location || "",
     });
-  }, [user?.name, user?.bio, user?.location, editMode]);
+  }, [user?.name, user?.username, user?.email, user?.bio, user?.location, editMode]);
 
   function setProfileField(k: keyof typeof profileForm) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -48,9 +53,23 @@ export default function Profile() {
 
   async function saveProfile() {
     if (!token) return;
+
+    // Client-side validation mirroring the backend rules
+    const errs: Record<string, string> = {};
+    const username = profileForm.username.trim().toLowerCase();
+    const email = profileForm.email.trim();
+    if (username.length < 3 || username.length > 30) errs.username = "Username must be 3-30 characters";
+    else if (!/^[a-z0-9_]+$/.test(username)) errs.username = "Only letters, numbers, and underscores";
+    if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = "Please enter a valid email";
+    if (Object.keys(errs).length) { setProfileErrors(errs); return; }
+    setProfileErrors({});
+
     setLoading(true);
     try {
-      const res = await api.profile.update(profileForm, token);
+      const res = await api.profile.update(
+        { ...profileForm, username, email: email.toLowerCase() },
+        token
+      );
       // Merge the response into the existing user so fields the backend does
       // not return (or that the user did not touch) are preserved.
       updateUser(user ? { ...user, ...res.user } : (res.user as User));
@@ -156,11 +175,13 @@ export default function Profile() {
 
           {editMode ? (
             <>
-              <Input label="Full name" value={profileForm.name} onChange={setProfileField("name")} />
+              <Input label="Full name" value={profileForm.name} onChange={setProfileField("name")} error={profileErrors.name} />
+              <Input label="Username" value={profileForm.username} onChange={(e) => setProfileForm(f => ({ ...f, username: e.target.value }))} error={profileErrors.username} placeholder="johndoe" autoComplete="username" leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>} />
+              <Input label="Email address" type="email" value={profileForm.email} onChange={(e) => setProfileForm(f => ({ ...f, email: e.target.value }))} error={profileErrors.email} placeholder="you@example.com" autoComplete="email" leftIcon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>} />
               <Textarea label="Bio" value={profileForm.bio} onChange={setProfileField("bio")} placeholder="Tell the community about yourself..." rows={3} />
               <Input label="Location" value={profileForm.location} onChange={setProfileField("location")} placeholder="City or neighborhood" leftIcon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>} />
               <div className="flex gap-3 pt-2">
-                <Button variant="outline" onClick={() => { setEditMode(false); setProfileForm({ name: user.name, bio: user.bio || "", location: user.location || "" }); }} className="flex-1">Cancel</Button>
+                <Button variant="outline" onClick={() => { setEditMode(false); setProfileErrors({}); setProfileForm({ name: user.name, username: user.username, email: user.email, bio: user.bio || "", location: user.location || "" }); }} className="flex-1">Cancel</Button>
                 <Button variant="primary" onClick={saveProfile} loading={loading} className="flex-1">Save changes</Button>
               </div>
             </>

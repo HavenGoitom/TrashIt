@@ -13,12 +13,12 @@ const REFRESH_COOKIE_PATH = "/api/auth";
 // @access  Private
 export const updateProfile = async (req, res) => {
     try {
-        const { name, bio, location } = req.body;
+        const { name, username, email, bio, location } = req.body;
 
-        if (name === undefined && bio === undefined && location === undefined) {
+        if (name === undefined && username === undefined && email === undefined && bio === undefined && location === undefined) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide at least one field to update (name, bio, or location)"
+                message: "Please provide at least one field to update (name, username, email, bio, or location)"
             });
         }
 
@@ -48,6 +48,55 @@ export const updateProfile = async (req, res) => {
                 });
             }
             user.name = trimmedName;
+        }
+
+        if (username !== undefined) {
+            const normalized = String(username).trim().toLowerCase();
+            if (normalized.length < 3 || normalized.length > 30) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Username must be 3-30 characters"
+                });
+            }
+            if (!/^[a-z0-9_]+$/.test(normalized)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Username can only contain letters, numbers, and underscores"
+                });
+            }
+            if (normalized !== user.username) {
+                const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                const existing = await User.findOne({
+                    username: { $regex: `^${escaped}$`, $options: "i" }
+                });
+                if (existing) {
+                    return res.status(409).json({
+                        success: false,
+                        message: "That username is already taken"
+                    });
+                }
+                user.username = normalized;
+            }
+        }
+
+        if (email !== undefined) {
+            const normalizedEmail = String(email).trim().toLowerCase();
+            if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please provide a valid email address"
+                });
+            }
+            if (normalizedEmail !== user.email) {
+                const existing = await User.findOne({ email: normalizedEmail });
+                if (existing) {
+                    return res.status(409).json({
+                        success: false,
+                        message: "That email is already registered"
+                    });
+                }
+                user.email = normalizedEmail;
+            }
         }
 
         if (bio !== undefined) {
@@ -90,6 +139,19 @@ export const updateProfile = async (req, res) => {
             }
         });
     } catch (error) {
+        // Concurrent duplicate username/email (unique index violation)
+        if (error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: "That username or email is already in use"
+            });
+        }
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
         return res.status(500).json({
             success: false,
             message: "Error updating profile",
