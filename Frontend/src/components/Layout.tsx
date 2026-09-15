@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { useRouter } from "../context";
 import { useAuth } from "../context";
 import type { Page } from "../types";
+import logoUrl from "../../favicon.svg";
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <img
-      src="/favicon.svg"
+      src={logoUrl}
       alt="TrashIt logo"
       className={className}
       style={{ height: "2.5rem", width: "auto" }}

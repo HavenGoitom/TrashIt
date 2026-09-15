@@ -141,21 +141,6 @@ export default function Landing() {
                 </button>
               </div>
 
-              {/* Stats row */}
-              <div className="flex items-center gap-8 mt-10 pt-8 border-t border-cream-200">
-                <div>
-                  <div className="font-display text-2xl font-semibold text-brown-800">284+</div>
-                  <div className="text-xs text-brown-400 font-medium mt-0.5">Active posts</div>
-                </div>
-                <div>
-                  <div className="font-display text-2xl font-semibold text-brown-800">127</div>
-                  <div className="text-xs text-brown-400 font-medium mt-0.5">Community members</div>
-                </div>
-                <div>
-                  <div className="font-display text-2xl font-semibold text-brown-800">98%</div>
-                  <div className="text-xs text-brown-400 font-medium mt-0.5">Happy trades</div>
-                </div>
-              </div>
             </div>
 
             {/* Illustration */}
@@ -181,28 +166,6 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Live Posts Marquee */}
-      <section className="bg-cream-100 border-y border-cream-200 py-3">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <span className="flex-shrink-0 px-4 py-1 bg-orange-500 text-white text-xs font-bold rounded-full ml-4">LIVE</span>
-          {loading ? (
-            <span className="text-sm text-brown-400">Loading posts...</span>
-          ) : previewPosts.length > 0 ? (
-            <div className="flex items-center gap-4 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
-              {previewPosts.map((p) => (
-                <div key={p._id} className="flex items-center gap-2 flex-shrink-0">
-                  <Badge variant={p.type}>{p.type}</Badge>
-                  <span className="text-sm text-brown-600 font-medium">{p.title}</span>
-                  <span className="text-brown-300 text-xs">·</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <span className="text-sm text-brown-400">No active posts yet</span>
-          )}
         </div>
       </section>
 
