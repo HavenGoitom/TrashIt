@@ -10,6 +10,9 @@ import {
     getReports,
     resolveReport,
     rejectReport,
+    getReviewRequests,
+    approveReviewRequest,
+    rejectReviewRequest,
     getStats
 } from "../controller/adminController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
@@ -34,6 +37,11 @@ adminRouter.delete("/posts/:id", removePost);
 adminRouter.get("/reports", getReports);
 adminRouter.patch("/reports/:id/resolve", resolveReport);
 adminRouter.patch("/reports/:id/reject", rejectReport);
+
+// Suspension review requests
+adminRouter.get("/review-requests", getReviewRequests);
+adminRouter.patch("/review-requests/:id/approve", approveReviewRequest);
+adminRouter.patch("/review-requests/:id/reject", rejectReviewRequest);
 
 // Statistics
 adminRouter.get("/stats", getStats);

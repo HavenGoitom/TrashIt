@@ -9,6 +9,7 @@ import type {
   Match,
   AIIdea,
   Report,
+  SuspensionReview,
   AdminStats,
 } from "./types";
 
@@ -131,6 +132,11 @@ async function request<T>(
     console.error(`[TrashIt API] ${res.status} ${path}:`, data?.message || data);
     if (res.status === 401) {
       window.dispatchEvent(new CustomEvent('trashit:unauthorized'));
+    }
+    // A suspended account is a special 403: the app switches to the suspended
+    // screen, which is the only place a review request can be submitted from.
+    if (res.status === 403 && data?.error === "ACCOUNT_SUSPENDED") {
+      window.dispatchEvent(new CustomEvent('trashit:suspended'));
     }
     throw new Error(friendlyError(res.status, data?.message));
   }
@@ -801,10 +807,7 @@ export const api = {
       }
       return request<{ success: boolean }>("/api/profile/password", { method: "PUT", body: JSON.stringify(data) }, token);
     },
-    delete: async (password: string, token: string) => {
-      if (USE_MOCK) { await delay(600); return { success: true, message: "Account deleted successfully" }; }
-      return request<{ success: boolean }>("/api/profile", { method: "DELETE", body: JSON.stringify({ password }) }, token);
-    },
+    delete: undefined, // Account deletion is not supported — admins suspend accounts instead.
   },
 
   reports: {
@@ -819,6 +822,23 @@ export const api = {
     getMy: async (token: string) => {
       if (USE_MOCK) { await delay(400); return { success: true, count: MOCK_REPORTS.length, reports: MOCK_REPORTS }; }
       return request<{ success: boolean; reports: Report[] }>("/api/reports/my", {}, token);
+    },
+  },
+
+  // Suspension review requests — the only endpoints a suspended account can
+  // still reach (they authenticate without the suspension block).
+  suspensionReviews: {
+    create: async (message: string, token: string) => {
+      return request<{ success: boolean; message: string; review: SuspensionReview }>(
+        "/api/suspension-reviews",
+        { method: "POST", body: JSON.stringify({ message }) },
+        token
+      );
+    },
+    getMine: async (token: string) => {
+      return request<{ success: boolean; review: SuspensionReview | null }>(
+        "/api/suspension-reviews/mine", {}, token
+      );
     },
   },
 
@@ -897,6 +917,19 @@ export const api = {
     getStats: async (token: string) => {
       if (USE_MOCK) { await delay(400); return { success: true, stats: MOCK_ADMIN_STATS }; }
       return request<{ success: boolean; stats: AdminStats }>("/api/admin/stats", {}, token);
+    },
+    unsuspendUser: async (userId: string, token: string) => {
+      return request<{ success: boolean }>(`/api/admin/users/${userId}/unsuspend`, { method: "PATCH" }, token);
+    },
+    getReviewRequests: async (token: string, status?: string) => {
+      const q = status ? `?status=${status}` : "";
+      return request<{ success: boolean; reviews: SuspensionReview[] }>(`/api/admin/review-requests${q}`, {}, token);
+    },
+    approveReviewRequest: async (reviewId: string, adminNote: string, token: string) => {
+      return request<{ success: boolean }>(`/api/admin/review-requests/${reviewId}/approve`, { method: "PATCH", body: JSON.stringify({ adminNote }) }, token);
+    },
+    rejectReviewRequest: async (reviewId: string, adminNote: string, token: string) => {
+      return request<{ success: boolean }>(`/api/admin/review-requests/${reviewId}/reject`, { method: "PATCH", body: JSON.stringify({ adminNote }) }, token);
     },
   },
 };

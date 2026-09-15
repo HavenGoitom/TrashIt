@@ -15,6 +15,7 @@ import profileRouter from "./routes/profileRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import aiRouter from "./routes/aiRoute.js";
 import matchRouter from "./routes/matchRoute.js";
+import suspensionReviewRouter from "./routes/suspensionReviewRoute.js";
 import { cookieParser } from "./middleware/cookieMiddleware.js";
 import { initSocket } from "./socket/socketHandler.js";
 
@@ -105,6 +106,7 @@ app.use("/api/profile", profileRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/matches", matchRouter);
+app.use("/api/suspension-reviews", suspensionReviewRouter);
 
 httpServer.listen(port, () => {
     console.log(`Server is running on port ${port}`);

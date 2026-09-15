@@ -176,7 +176,8 @@ export const login = async (req, res) => {
         if (user.suspended) {
             return res.status(403).json({
                 success: false,
-                message: "Your account has been suspended. Contact support."
+                message: "Your account has been suspended.",
+                error: "ACCOUNT_SUSPENDED"
             });
         }
 

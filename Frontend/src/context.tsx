@@ -99,6 +99,8 @@ interface AuthContextValue {
   isAdmin: boolean;
   isLoggedIn: boolean;
   authRestoring: boolean;
+  isSuspended: boolean;
+  clearSuspended: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -107,10 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(getStoredUser);
   const [token, setToken] = useState<string | null>(getStoredToken);
   const [authRestoring, setAuthRestoring] = useState(true);
+  const [isSuspended, setIsSuspended] = useState(false);
 
   const login = useCallback((t: string, u: User) => {
     setToken(t);
     setUser(u);
+    setIsSuspended(!!u.suspended);
     try {
       localStorage.setItem(TOKEN_KEY, t);
       localStorage.setItem(USER_KEY, JSON.stringify(u));
@@ -120,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
+    setIsSuspended(false);
     disconnectSocket();
     try {
       localStorage.removeItem(TOKEN_KEY);
@@ -129,6 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // session cannot be silently restored later.
     void api.auth.logout();
   }, []);
+
+  const clearSuspended = useCallback(() => setIsSuspended(false), []);
 
   const updateUser = useCallback((u: User) => {
     setUser(u);
@@ -155,6 +162,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener("trashit:token-refreshed", handleRefreshed);
     return () => window.removeEventListener("trashit:token-refreshed", handleRefreshed);
   }, [login]);
+
+  // The API client flags a suspended account on any 403 ACCOUNT_SUSPENDED —
+  // including a suspended user trying to log in. The app then shows the
+  // suspended screen, the only place a review request can be submitted.
+  useEffect(() => {
+    const handleSuspended = () => setIsSuspended(true);
+    window.addEventListener("trashit:suspended", handleSuspended);
+    return () => window.removeEventListener("trashit:suspended", handleSuspended);
+  }, []);
 
   // Restore the session on load. A stored token is validated by the app (the
   // API client refreshes it silently on 401); with no stored token we fall back
@@ -192,6 +208,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: user?.role === "admin",
         isLoggedIn: !!user,
         authRestoring,
+        isSuspended,
+        clearSuspended,
       }}
     >
       {children}

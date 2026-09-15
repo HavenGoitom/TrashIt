@@ -96,6 +96,15 @@ export interface Report {
   createdAt: string;
 }
 
+export interface SuspensionReview {
+  _id: string;
+  user: Pick<User, "_id" | "username" | "name" | "email"> & { suspended?: boolean };
+  message: string;
+  status: "pending" | "approved" | "rejected";
+  adminNote?: string;
+  createdAt: string;
+}
+
 export interface AdminStats {
   users: { total: number; suspended: number };
   posts: { total: number; active: number; sold: number; closed: number };

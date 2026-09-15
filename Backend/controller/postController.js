@@ -6,6 +6,16 @@ import { findMatchesForPost } from "../services/matchingService.js";
 // @access  Private
 export const createPost = async (req, res) => {
     try {
+        // Defense in depth — authMiddleware already blocks suspended accounts,
+        // but post creation must never be possible while suspended.
+        if (req.user.suspended) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been suspended.",
+                error: "ACCOUNT_SUSPENDED"
+            });
+        }
+
         const { title, description, images, type, price, quantity } = req.body;
 
         if (!title || !type || !price || !quantity) {

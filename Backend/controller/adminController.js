@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Post from "../models/Post.js";
 import Report from "../models/Report.js";
+import SuspensionReview from "../models/SuspensionReview.js";
 
 // @desc    Get all users
 // @route   GET /api/admin/users
@@ -237,6 +238,112 @@ export const rejectReport = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Error rejecting report",
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get all suspension review requests
+// @route   GET /api/admin/review-requests
+// @access  Admin
+export const getReviewRequests = async (req, res) => {
+    try {
+        const { status } = req.query;
+        const filter = {};
+        if (status) filter.status = status;
+
+        const reviews = await SuspensionReview.find(filter)
+            .populate("user", "username name email suspended")
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            success: true,
+            count: reviews.length,
+            reviews
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching review requests",
+            error: error.message
+        });
+    }
+};
+
+// @desc    Approve a suspension review request — restores the account
+// @route   PATCH /api/admin/review-requests/:id/approve
+// @access  Admin
+export const approveReviewRequest = async (req, res) => {
+    try {
+        const { adminNote } = req.body;
+        const review = await SuspensionReview.findById(req.params.id);
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: "Review request not found"
+            });
+        }
+        if (review.status !== "pending") {
+            return res.status(400).json({
+                success: false,
+                message: "This review request has already been handled"
+            });
+        }
+
+        review.status = "approved";
+        review.adminNote = adminNote || "";
+        await review.save();
+
+        // Restore the account
+        await User.findByIdAndUpdate(review.user, { suspended: false });
+
+        return res.status(200).json({
+            success: true,
+            message: "Review approved — account restored",
+            review
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error approving review request",
+            error: error.message
+        });
+    }
+};
+
+// @desc    Reject a suspension review request — account stays suspended
+// @route   PATCH /api/admin/review-requests/:id/reject
+// @access  Admin
+export const rejectReviewRequest = async (req, res) => {
+    try {
+        const { adminNote } = req.body;
+        const review = await SuspensionReview.findById(req.params.id);
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: "Review request not found"
+            });
+        }
+        if (review.status !== "pending") {
+            return res.status(400).json({
+                success: false,
+                message: "This review request has already been handled"
+            });
+        }
+
+        review.status = "rejected";
+        review.adminNote = adminNote || "";
+        await review.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Review rejected — account remains suspended",
+            review
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error rejecting review request",
             error: error.message
         });
     }
