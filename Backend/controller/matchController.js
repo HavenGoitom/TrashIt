@@ -1,5 +1,38 @@
 import Match from "../models/Match.js";
 import Post from "../models/Post.js";
+import { findMatchesForPost } from "../services/matchingService.js";
+
+// @desc    Re-run matching for the current user's active posts
+// @route   POST /api/matches/refresh
+// @access  Private
+export const refreshMatches = async (req, res) => {
+    try {
+        const userPosts = await Post.find({
+            user: req.user._id,
+            status: "active"
+        });
+
+        let created = 0;
+        for (const post of userPosts) {
+            const matches = await findMatchesForPost(post);
+            created += matches.length;
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: created > 0
+                ? `Found ${created} new ${created === 1 ? "match" : "matches"}`
+                : "No new matches found yet",
+            created
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Error refreshing matches",
+            error: error.message
+        });
+    }
+};
 
 // @desc    Get current user's matches
 // @route   GET /api/matches

@@ -842,6 +842,10 @@ export const api = {
       if (USE_MOCK) { await delay(500); return { success: true, count: MOCK_MATCHES.length, matches: MOCK_MATCHES }; }
       return request<{ success: boolean; matches: Match[] }>("/api/matches", {}, token);
     },
+    refreshMatches: async (token: string) => {
+      if (USE_MOCK) { await delay(800); return { success: true, message: "No new matches found yet", created: 0 }; }
+      return request<{ success: boolean; message: string; created: number }>("/api/matches/refresh", { method: "POST" }, token);
+    },
     getMatchDetail: async (id: string, token: string) => {
       if (USE_MOCK) {
         await delay(400);

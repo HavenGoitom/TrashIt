@@ -2,8 +2,10 @@ import Post from "../models/Post.js";
 import Match from "../models/Match.js";
 import Notification from "../models/Notification.js";
 import { getIO } from "../socket/socketHandler.js";
+import { generateAIText } from "./aiService.js";
 
-// Extract item info from a post using Gemini
+// Extract item info from a post using the AI provider fallback chain
+// (Gemini → OpenRouter → Grok). Returns null if all providers fail.
 async function extractItemInfo(post) {
     const prompt = `Given this marketplace post, extract the item name and category.
 Title: "${post.title}"
@@ -18,35 +20,32 @@ Return ONLY a JSON object (no markdown, no code fences) with:
 
 Example: {"item": "plastic chairs", "category": "furniture"}`;
 
-    const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-goog-api-key": process.env.GEMINI_API_KEY
-            },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        }
-    );
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!text) return null;
-
-    // Clean markdown fences
-    if (text.startsWith("```json")) {
-        text = text.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-    } else if (text.startsWith("```")) {
-        text = text.replace(/^```\s*/, "").replace(/\s*```$/, "");
-    }
-
     try {
-        return JSON.parse(text);
+        const text = (await generateAIText(prompt)).text.trim();
+        if (!text) return null;
+
+        // Clean markdown fences
+        let cleaned = text;
+        if (cleaned.startsWith("```json")) {
+            cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+        } else if (cleaned.startsWith("```")) {
+            cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
+        }
+
+        try {
+            return JSON.parse(cleaned);
+        } catch {
+            // Some providers wrap JSON in prose — try to pull the object out
+            const m = cleaned.match(/\{[\s\S]*\}/);
+            if (m) {
+                try {
+                    return JSON.parse(m[0]);
+                } catch {
+                    return null;
+                }
+            }
+            return null;
+        }
     } catch {
         return null;
     }

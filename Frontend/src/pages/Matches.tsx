@@ -100,13 +100,52 @@ export default function Matches() {
   const { token } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState("");
+
+  async function loadMatches(tok: string) {
+    const res = await api.ai.getMatches(tok);
+    setMatches(res.matches);
+    return res.matches;
+  }
 
   useEffect(() => {
     if (!token) return;
-    api.ai.getMatches(token).then((res) => {
-      setMatches(res.matches);
-    }).finally(() => setLoading(false));
+    loadMatches(token)
+      // If the user has no matches yet, ask the backend to re-scan their
+      // active posts once — matches are normally created when posts are
+      // created, so older posts need a one-time refresh.
+      .then(async (initial) => {
+        if (initial.length === 0) {
+          setRefreshing(true);
+          try {
+            await api.ai.refreshMatches(token);
+            await loadMatches(token!);
+          } catch {
+            // Matching is AI-powered; ignore refresh failures and show empty state
+          } finally {
+            setRefreshing(false);
+          }
+        }
+      })
+      .catch(() => setMatches([]))
+      .finally(() => setLoading(false));
   }, [token]);
+
+  async function handleRefresh() {
+    if (!token || refreshing) return;
+    setRefreshing(true);
+    setRefreshMessage("");
+    try {
+      const res = await api.ai.refreshMatches(token);
+      const updated = await loadMatches(token!);
+      setRefreshMessage(updated.length > 0 ? res.message : "No new matches found yet");
+    } catch {
+      setRefreshMessage("Could not check right now. Please try again later.");
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
@@ -138,13 +177,21 @@ export default function Matches() {
       ) : matches.length === 0 ? (
         <EmptyState
           illustration="box"
-          title="No matches yet"
-          description="Post your BUY or SELL listings and our AI will automatically find connections for you."
-          action={{ label: "Create a post", onClick: () => { } }}
+          title={refreshing ? "Scanning your posts..." : "No matches yet"}
+          description={refreshing ? "Our AI is looking for BUY ↔ SELL connections. This can take a moment." : "Post your BUY or SELL listings and our AI will automatically find connections for you."}
+          action={refreshing ? undefined : { label: "Check for new matches", onClick: handleRefresh }}
         />
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-brown-400 mb-2">{matches.length} match{matches.length !== 1 ? "es" : ""} found</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-brown-400">{matches.length} match{matches.length !== 1 ? "es" : ""} found</p>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} loading={refreshing}>
+              Refresh
+            </Button>
+          </div>
+          {refreshMessage && (
+            <p className={`text-xs ${matches.length > 0 ? "text-olive-600" : "text-brown-400"}`}>{refreshMessage}</p>
+          )}
           {matches.map((match) => (
             <MatchCard key={match._id} match={match} />
           ))}
