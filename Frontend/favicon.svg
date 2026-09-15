@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 36">
+  <g transform="translate(0, 4)">
+    <path d="M14 4L9 13h3l-3 6h12l-3-6h3z" fill="#c4622d" stroke="#c4622d" stroke-width="0.5" stroke-linejoin="round" opacity="0.9"/>
+    <path d="M7 19l-3 5 4 1M21 19l3 5-4 1" stroke="#c4622d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M9 25c1 1 5 2 5 2M19 25c-1 1-5 2-5 2" stroke="#c4622d" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <text x="34" y="26" font-size="20" font-weight="700" fill="#1a1009" font-family="Fraunces, Georgia, serif" letter-spacing="-0.5">TrashIt</text>
+</svg>
