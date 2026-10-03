@@ -30,60 +30,60 @@
 
 ##  Screenshots
 
-###  AI � "What Could I Make?"
+###  AI  "What Could I Make?"
 > Tell the AI what material you have and it suggests creative ways to reuse, repurpose, or upcycle it � with step-by-step instructions.
 
 ![AI What Could I Make](./screenshots/image.png)
 
 ---
 
-### ? AI Post Matches
+###  AI Post Matches
 > The AI scans BUY and SELL posts and automatically connects you with the most relevant listings.
 
 ![AI Post Matches](./screenshots/image%20copy.png)
 
 ---
 
-### ?? Create a Post
+###  Create a Post
 > Easily list what you're selling or what you're looking for in a clean two-step flow.
 
 ![Create a Post](./screenshots/image%20copy%202.png)
 
 ---
 
-### ?? Browse Posts
+###  Browse Posts
 > Explore community listings with filters by type, status, price range, and sort order.
 
 ![Browse Posts](./screenshots/image%20copy%203.png)
 
 ---
 
-### ?? Live Messages
+###  Live Messages
 > Real-time chat powered by WebSockets � negotiate, ask questions, and close deals instantly.
 
 ![Live Messages](./screenshots/image%20copy%204.png)
 
 ---
 
-### ?? Notifications
+###  Notifications
 > Get instant alerts for AI matches and new messages � all in one place.
 
 ![Notifications](./screenshots/image%20copy%205.png)
 
 ---
 
-## ? Features
+##  Features
 
-- ?? **Buy & Sell Listings** � Post items you have or materials you need
-- ?? **AI Upcycle Ideas** � Get creative reuse suggestions for any material
-- ?? **AI Match Engine** � Automatically pairs compatible buy/sell posts
-- ?? **Real-time Messaging** � Live chat via WebSockets between buyers and sellers
-- ?? **Smart Notifications** � Instant alerts for matches and messages
-- ?? **Image Uploads** � Powered by Cloudinary
-- ?? **Auth & Security** � JWT authentication with rate limiting and helmet
-- ?? **Admin Panel** � Manage posts, users, and platform content
+-  **Buy & Sell Listings**  Post items you have or materials you need
+-  **AI Upcycle Ideas**  Get creative reuse suggestions for any material
+-  **AI Match Engine**  Automatically pairs compatible buy/sell posts
+-  **Real-time Messaging**  Live chat via WebSockets between buyers and sellers
+-  **Smart Notifications**  Instant alerts for matches and messages
+-  **Image Uploads**  Powered by Cloudinary
+-  **Auth & Security**  JWT authentication with rate limiting and helmet
+-  **Admin Panel**  Manage posts, users, and platform content
 
-## ?? Getting Started
+##  Getting Started
 
 ### Frontend
 
