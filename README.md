@@ -1,165 +1,112 @@
-# TrashIt
+# TrashIt 
 
-TrashIt is a waste-exchange platform. People post items they want to get rid of and items they need, so useful things get reused instead of thrown away.
+**TrashIt** is a community-driven marketplace for buying, selling, and repurposing materials � powered by AI. List what you have, find what you need, and let our AI match you with the right people or spark creative ways to upcycle your items.
 
-## What you can do
+> Built to reduce waste and connect communities through smarter resource sharing.
 
-- Create an account and log in
-- Post items you want to give away or buy
-- Browse and search posts
-- Set a price range and filter posts
-- Get AI-generated ideas for what you could make from an item
-- Optionally explore “what you could make” suggestions
+## Live Demo
 
-The app has a backend API and a frontend web app.
+**[trash-it-three.vercel.app](https://trash-it-three.vercel.app/)**
 
-## Tech stack
+---
 
-- **Frontend:** React (TypeScript/Vite)
-- **Backend:** Node.js + Express
-- **Database:** MongoDB (via Mongoose)
-- **Image uploads:** Cloudinary
-- **Real-time:** Socket.io (for messaging/notifications)
+##  Tech Stack
 
-## Getting started
+<p align="left">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white" alt="Framer Motion" />
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white" alt="Cloudinary" />
+  <img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white" alt="Socket.io" />
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel" />
+</p>
 
-### Prerequisites
+---
 
-- Node.js
-- MongoDB running and reachable
-- Cloudinary account and credentials (for image uploads)
+##  Screenshots
 
-### Setup
+###  AI � "What Could I Make?"
+> Tell the AI what material you have and it suggests creative ways to reuse, repurpose, or upcycle it � with step-by-step instructions.
 
-1. Clone the repository and install dependencies.
+![AI What Could I Make](./screenshots/image.png)
+
+---
+
+### ? AI Post Matches
+> The AI scans BUY and SELL posts and automatically connects you with the most relevant listings.
+
+![AI Post Matches](./screenshots/image%20copy.png)
+
+---
+
+### ?? Create a Post
+> Easily list what you're selling or what you're looking for in a clean two-step flow.
+
+![Create a Post](./screenshots/image%20copy%202.png)
+
+---
+
+### ?? Browse Posts
+> Explore community listings with filters by type, status, price range, and sort order.
+
+![Browse Posts](./screenshots/image%20copy%203.png)
+
+---
+
+### ?? Live Messages
+> Real-time chat powered by WebSockets � negotiate, ask questions, and close deals instantly.
+
+![Live Messages](./screenshots/image%20copy%204.png)
+
+---
+
+### ?? Notifications
+> Get instant alerts for AI matches and new messages � all in one place.
+
+![Notifications](./screenshots/image%20copy%205.png)
+
+---
+
+## ? Features
+
+- ?? **Buy & Sell Listings** � Post items you have or materials you need
+- ?? **AI Upcycle Ideas** � Get creative reuse suggestions for any material
+- ?? **AI Match Engine** � Automatically pairs compatible buy/sell posts
+- ?? **Real-time Messaging** � Live chat via WebSockets between buyers and sellers
+- ?? **Smart Notifications** � Instant alerts for matches and messages
+- ?? **Image Uploads** � Powered by Cloudinary
+- ?? **Auth & Security** � JWT authentication with rate limiting and helmet
+- ?? **Admin Panel** � Manage posts, users, and platform content
+
+## ?? Getting Started
+
+### Frontend
 
 ```bash
-cd TrashIt
-cd Backend
+cd web
 npm install
-cd ../Frontend
-npm install
-```
-
-2. Configure environment variables.
-
-Create a `.env` file in the backend folder. At minimum you will need something like:
-
-```
-PORT=5000
-MONGO_URI=<your mongodb connection string>
-
-# Optional: image uploads
-CLOUDINARY_CLOUD_NAME=<your cloud name>
-CLOUDINARY_API_KEY=<your api key>
-CLOUDINARY_API_SECRET=<your api secret>
-```
-
-The frontend reads `VITE_API_URL` to know where the backend is. If you do not set it, it defaults to `http://localhost:5000`.
-
-3. Start the backend.
-
-```bash
-cd Backend
 npm run dev
 ```
 
-The backend runs on port 5000 by default.
-
-4. Start the frontend.
+### Backend
 
 ```bash
-cd Frontend
+cd Backend
+npm install
 npm run dev
 ```
 
-Open the URL printed in the terminal.
+### Admin
 
-### Seed users or test data
-
-If the project uses seed scripts or test fixtures, run them only in a development environment and never with real production credentials.
-
-## Features
-
-### Posts
-
-Posts are the main content in the app. A post describes an item someone is offering or looking for. Depending on the implementation, posts may support:
-
-- title and description
-- price information
-- quantity
-- images
-- status such as active, sold, or closed
-
-### Matching
-
-Matching connects posts together. For example, an item someone is offering might pair with an item someone is looking for. The matching logic is based on the backend implementation and may use item name similarity or other criteria.
-
-### AI features
-
-The app can suggest reuse or creation ideas for items. These features call an external AI provider through the backend. They are optional and depend on the configured API keys.
-
-## Environment variables
-
-Backend example:
-
-```
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/trashit
-
-# Image uploads
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-
-# AI features (optional)
-GEMINI_API_KEY=
-OPENROUTER_API_KEY=
-GROK_API_KEY=
-GROK_BASE_URL=https://api.x.ai/v1
-
-# AI provider settings (optional)
-GEMINI_MODEL=
-OPENROUTER_MODEL=
-GROK_MODEL=
-AI_REQUEST_TIMEOUT_MS=30000
+```bash
+cd Admin
+npm install
+npm run dev
 ```
 
-The exact keys depend on the features you want to enable. AI and image upload variables are optional.
-
-## API
-
-The backend exposes a REST API under `/api`. Common areas include authentication, posts, favorites, messages, notifications, reports, profile, admin endpoints, AI features, and matches.
-
-WebSocket events are also used for real-time updates such as messages and notifications.
-
-For the exact request shapes, see the Postman collection in the backend folder if one is provided.
-
-## Folder layout
-
-```text
-TrashIt/
-├── Backend/
-│   ├── app.js
-│   ├── controller/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   ├── services/
-│   └── socket/
-├── Frontend/
-│   ├── src/
-│   ├── public/
-│   └── ...
-└── README.md
-```
-
-## Security notes
-
-- Do not commit `.env` files or API keys.
-- Use strong passwords and rotate keys if they are exposed.
-- Verify CORS, cookie, and token settings before exposing the backend publicly.
-
-## License
-
-This project is provided as-is for learning and reuse.
+> Copy `.env` files and fill in your `MONGODB_URI`, `JWT_SECRET`, `CLOUDINARY_*`, and frontend origin URLs.
