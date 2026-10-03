@@ -100,13 +100,3 @@ cd Backend
 npm install
 npm run dev
 ```
-
-### Admin
-
-```bash
-cd Admin
-npm install
-npm run dev
-```
-
-> Copy `.env` files and fill in your `MONGODB_URI`, `JWT_SECRET`, `CLOUDINARY_*`, and frontend origin URLs.
